@@ -1,6 +1,6 @@
 # 关于我
 
-![img](http://lnback.cn/imgbed/img/about.jpg)
+![img](https://cdn.jsdelivr.net/gh/lnback/imgbed/img/about.jpg)
 
 ## 关于我
 - CTGU lnback
