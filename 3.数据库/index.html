@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="robots" content="noodp" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1">
+        <title>《Redis设计与实现》（三）数据库 - lnback&#39; s blog</title><meta name="Description" content="LLY 的个人博客"><meta property="og:title" content="《Redis设计与实现》（三）数据库" />
+<meta property="og:description" content="数据库 一、服务器中的数据库 &amp; 数据库的切换 Redis服务器将所有数据结构都保存在服务器状态redis.h/redisServer结构的db数组" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://example.com/3.%E6%95%B0%E6%8D%AE%E5%BA%93/" />
+<meta property="og:image" content="https://example.com/logo.png"/>
+<meta property="article:published_time" content="2020-12-07T20:34:30+08:00" />
+<meta property="article:modified_time" content="2020-12-07T20:34:30+08:00" />
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://example.com/logo.png"/>
+
+<meta name="twitter:title" content="《Redis设计与实现》（三）数据库"/>
+<meta name="twitter:description" content="数据库 一、服务器中的数据库 &amp; 数据库的切换 Redis服务器将所有数据结构都保存在服务器状态redis.h/redisServer结构的db数组"/>
+<meta name="application-name" content="lnback">
+<meta name="apple-mobile-web-app-title" content="lnback"><meta name="theme-color" content="#ffffff"><meta name="msapplication-TileColor" content="#da532c"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="https://example.com/3.%E6%95%B0%E6%8D%AE%E5%BA%93/" /><link rel="prev" href="https://example.com/1.%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/" /><link rel="next" href="https://example.com/4.%E6%8C%81%E4%B9%85%E5%8C%96/" /><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/normalize.css@8.0.1/normalize.min.css"><link rel="stylesheet" href="/css/style.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.13.0/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.7.2/animate.min.css"><script type="application/ld+json">
+    {
+        "@context": "http://schema.org",
+        "@type": "BlogPosting",
+        "headline": "《Redis设计与实现》（三）数据库",
+        "inLanguage": "zh-CN",
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "https:\/\/example.com\/3.%E6%95%B0%E6%8D%AE%E5%BA%93\/"
+        },"genre": "posts","keywords": "Redis, 阅读","wordcount":  3538 ,
+        "url": "https:\/\/example.com\/3.%E6%95%B0%E6%8D%AE%E5%BA%93\/","datePublished": "2020-12-07T20:34:30+08:00","dateModified": "2020-12-07T20:34:30+08:00","license": "This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.","publisher": {
+            "@type": "Organization",
+            "name": "xxxx","logo": "https:\/\/example.com\/images\/avatar.png"},"author": {
+                "@type": "Person",
+                "name": "lnback"
+            },"description": ""
+    }
+    </script></head>
+    <body header-desktop="fixed" header-mobile="auto"><script type="text/javascript">(window.localStorage && localStorage.getItem('theme') ? localStorage.getItem('theme') === 'dark' : ('auto' === 'auto' ? window.matchMedia('(prefers-color-scheme: dark)').matches : 'auto' === 'dark')) && document.body.setAttribute('theme', 'dark');</script>
+
+        <div id="mask"></div><div class="wrapper"><header class="desktop" id="header-desktop">
+    <div class="header-wrapper">
+        <div class="header-title">
+            <a href="/" title="lnback&#39; s blog">lnback</a>
+        </div>
+        <div class="menu">
+            <div class="menu-inner"><a class="menu-item" href="/posts/"> 所有文章 </a><a class="menu-item" href="/tags/"> 标签 </a><a class="menu-item" href="/categories/"> 分类 </a><a class="menu-item" href="/about/about"> 关于 </a><a class="menu-item" href="https://github.com/lnback" title="GitHub" rel="noopener noreffer" target="_blank"><i class='fab fa-github fa-fw'></i>  </a><span class="menu-item delimiter"></span><span class="menu-item search" id="search-desktop">
+                        <input type="text" placeholder="搜索文章标题或内容..." id="search-input-desktop">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-desktop" title="搜索">
+                            <i class="fas fa-search fa-fw"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-desktop" title="清空">
+                            <i class="fas fa-times-circle fa-fw"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-desktop">
+                            <i class="fas fa-spinner fa-fw fa-spin"></i>
+                        </span>
+                    </span><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
+                    <i class="fas fa-adjust fa-fw"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</header><header class="mobile" id="header-mobile">
+    <div class="header-container">
+        <div class="header-wrapper">
+            <div class="header-title">
+                <a href="/" title="lnback&#39; s blog">lnback</a>
+            </div>
+            <div class="menu-toggle" id="menu-toggle-mobile">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+        <div class="menu" id="menu-mobile"><div class="search-wrapper">
+                    <div class="search mobile" id="search-mobile">
+                        <input type="text" placeholder="搜索文章标题或内容..." id="search-input-mobile">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-mobile" title="搜索">
+                            <i class="fas fa-search fa-fw"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-mobile" title="清空">
+                            <i class="fas fa-times-circle fa-fw"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-mobile">
+                            <i class="fas fa-spinner fa-fw fa-spin"></i>
+                        </span>
+                    </div>
+                    <a href="javascript:void(0);" class="search-cancel" id="search-cancel-mobile">
+                        取消
+                    </a>
+                </div><a class="menu-item" href="/posts/" title="">所有文章</a><a class="menu-item" href="/tags/" title="">标签</a><a class="menu-item" href="/categories/" title="">分类</a><a class="menu-item" href="/about/about" title="">关于</a><a class="menu-item" href="https://github.com/lnback" title="GitHub" rel="noopener noreffer" target="_blank"><i class='fab fa-github fa-fw'></i></a><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
+                <i class="fas fa-adjust fa-fw"></i>
+            </a></div>
+    </div>
+</header>
+<div class="search-dropdown desktop">
+    <div id="search-dropdown-desktop"></div>
+</div>
+<div class="search-dropdown mobile">
+    <div id="search-dropdown-mobile"></div>
+</div>
+<main class="main">
+                <div class="container"><div class="toc" id="toc-auto">
+            <h2 class="toc-title">目录</h2>
+            <div class="toc-content" id="toc-content-auto"></div>
+        </div><article class="page single"><h1 class="single-title animated flipInX">《Redis设计与实现》（三）数据库</h1><div class="post-meta">
+            <div class="post-meta-line"><span class="post-author"><a href="/" title="Author" rel=" author" class="author"><i class="fas fa-user-circle fa-fw"></i>lnback</a></span>&nbsp;<span class="post-category">收录于 <a href="/categories/redis/"><i class="far fa-folder fa-fw"></i>redis</a></span></div>
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2020-12-07">2020-12-07</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 3538 字&nbsp;
+                <i class="far fa-clock fa-fw"></i>&nbsp;预计阅读 8 分钟&nbsp;<span id="/3.%E6%95%B0%E6%8D%AE%E5%BA%93/" class="leancloud_visitors" data-flag-title="《Redis设计与实现》（三）数据库">
+                        <i class="far fa-eye fa-fw"></i>&nbsp;<span class=leancloud-visitors-count></span>&nbsp;次阅读
+                    </span>&nbsp;</div>
+        </div><div class="details toc" id="toc-static"  kept="">
+                <div class="details-summary toc-title">
+                    <span>目录</span>
+                    <span><i class="details-icon fas fa-angle-right"></i></span>
+                </div>
+                <div class="details-content toc-content" id="toc-content-static"><nav id="TableOfContents">
+  <ul>
+    <li><a href="#一服务器中的数据库--数据库的切换">一、服务器中的数据库 &amp; 数据库的切换</a></li>
+    <li><a href="#二数据库键空间">二、数据库键空间</a>
+      <ul>
+        <li><a href="#21-键空间结构">2.1 键空间结构</a></li>
+        <li><a href="#22-键空间的增删改查">2.2 键空间的增删改查</a>
+          <ul>
+            <li><a href="#221-添加和修改键">2.2.1 添加和修改键</a></li>
+          </ul>
+        </li>
+        <li><a href="#222-删除键">2.2.2 删除键</a></li>
+        <li><a href="#223-查询键">2.2.3 查询键</a></li>
+      </ul>
+    </li>
+    <li><a href="#三过期键">三、过期键</a>
+      <ul>
+        <li><a href="#31-设置过期时间">3.1 设置过期时间</a></li>
+        <li><a href="#32-移除过期时间--计算并返回剩余ttl">3.2 移除过期时间 &amp; 计算并返回剩余TTL</a></li>
+        <li><a href="#33-过期键的删除策略">3.3 过期键的删除策略</a></li>
+      </ul>
+    </li>
+    <li><a href="#四数据库通知">四、数据库通知</a>
+      <ul>
+        <li><a href="#41-订阅通知">4.1 订阅通知</a></li>
+        <li><a href="#42-发送通知">4.2 发送通知</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav></div>
+            </div><div class="content" id="content"><h1 id="数据库">数据库</h1>
+<h2 id="一服务器中的数据库--数据库的切换">一、服务器中的数据库 &amp; 数据库的切换</h2>
+<p>Redis服务器将所有数据结构都保存在服务器状态<code>redis.h/redisServer</code>结构的db数组中，db数组的每一项都是一个<code>redis.h/redisDb</code>结构，每个redisDb结构都代表一个数据库：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="k">struct</span> <span class="n">redisServer</span><span class="p">{</span>
+
+    <span class="c1">//当前数据库指针
+</span><span class="c1"></span>    <span class="n">redisDb</span> <span class="o">*</span> <span class="n">db</span><span class="p">;</span>
+    <span class="c1">//数据库数量
+</span><span class="c1"></span>    <span class="kt">int</span> <span class="n">dbnum</span><span class="p">;</span>
+<span class="p">};</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>初始化时，程序会根据当前服务器的<code>dbnum</code>属性来决定建立数据库的个数，默认创建16个。
+<img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="..%5cmd%e5%9b%be%e7%89%87%5c13_1.png"
+        data-srcset="..%5cmd%e5%9b%be%e7%89%87%5c13_1.png, ..%5cmd%e5%9b%be%e7%89%87%5c13_1.png 1.5x, ..%5cmd%e5%9b%be%e7%89%87%5c13_1.png 2x"
+        data-sizes="auto"
+        alt="..\md图片\13_1.png"
+        title="..\md图片\13_1.png" /></p>
+<p>每个Redis客户端都有自己的目标数据库，当客户端执行读写命令时，就需要切换数据库。
+默认情况下，Redis客户端的目标数据库为0号数据库，但客户端可以通过执行SELECT命令来切换目标数据库。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-bash" data-lang="bash">redis&gt; SET msg <span class="s2">&#34;hello world&#34;</span>
+OK
+
+redis&gt; GET msg
+<span class="s2">&#34;hello world&#34;</span>
+
+redis&gt; SELECT <span class="m">2</span>
+OK
+
+redis<span class="o">[</span>2<span class="o">]</span>&gt; GET msg
+<span class="o">(</span>nil<span class="o">)</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>在服务器内部，客户端状态redisClient结构的Db属性记录了客户端当前的目标数据库，这个属性是一个指向redisDb结构的指针：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="k">typedef</span> <span class="k">struct</span> <span class="n">redisClient</span><span class="p">{</span>
+    <span class="c1">//记录客户端目前正在使用的数据库
+</span><span class="c1"></span>
+    <span class="n">redisDb</span> <span class="o">*</span> <span class="n">db</span><span class="p">;</span>
+<span class="p">}</span><span class="n">redisClient</span><span class="p">;</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>如果某个客户端的目标数据库为1号数据库，那么这个客户端所对应的客户端状态和服务器状态之间的关系如图：
+<img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="..%5cmd%e5%9b%be%e7%89%87%5c13_2.png"
+        data-srcset="..%5cmd%e5%9b%be%e7%89%87%5c13_2.png, ..%5cmd%e5%9b%be%e7%89%87%5c13_2.png 1.5x, ..%5cmd%e5%9b%be%e7%89%87%5c13_2.png 2x"
+        data-sizes="auto"
+        alt="..\md图片\13_2.png"
+        title="..\md图片\13_2.png" />
+通过修改指针，使他指向服务器中不同的数据库，从而达到切换的目的。</p>
+<hr>
+<h2 id="二数据库键空间">二、数据库键空间</h2>
+<h3 id="21-键空间结构">2.1 键空间结构</h3>
+<p>Redis是一个键值对数据库服务器，每个数据库都是一个<code>redis.h/redisDb</code>结构。其中<code>dict</code>字典保存了数据库中所有的键值对，我们将这个字典称为键空间(key space)。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="k">typedef</span> <span class="k">struct</span> <span class="n">redisDb</span><span class="p">{</span>
+    <span class="c1">//数据库键空间
+</span><span class="c1"></span>    <span class="n">dict</span> <span class="o">*</span> <span class="n">dict</span><span class="p">;</span>
+<span class="p">}</span><span class="n">redisDb</span><span class="p">;</span>
+
+</code></pre></td></tr></table>
+</div>
+</div><p>键空间的键就是数据库的键，每个键是一个字符串对象。键空间的值就是数据库的值，可以是字符串对象、列表对象、哈希表对象、集合对象和有序集合对象中的一种。
+当我们输入以下命令时：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-bash" data-lang="bash">redis&gt; SET message <span class="s2">&#34;hello world&#34;</span>
+OK
+
+redis&gt; RPUSH alphabet <span class="s2">&#34;a&#34;</span> <span class="s2">&#34;b&#34;</span> <span class="s2">&#34;c&#34;</span>
+<span class="o">(</span>integer<span class="o">)</span><span class="m">3</span>
+
+redis&gt; HSET book name <span class="s2">&#34;Redis in Action&#34;</span>
+<span class="o">(</span>integer<span class="o">)</span> <span class="m">1</span>
+
+redis&gt; HSET book author <span class="s2">&#34;Josiah L. Carlson&#34;</span>
+<span class="o">(</span>integer<span class="o">)</span> <span class="m">1</span>
+
+redis&gt; HSET book publisher <span class="s2">&#34;Manning&#34;</span>
+<span class="o">(</span>integer<span class="o">)</span> <span class="m">1</span>
+
+</code></pre></td></tr></table>
+</div>
+</div><p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="..%5cmd%e5%9b%be%e7%89%87%5c13_3.png"
+        data-srcset="..%5cmd%e5%9b%be%e7%89%87%5c13_3.png, ..%5cmd%e5%9b%be%e7%89%87%5c13_3.png 1.5x, ..%5cmd%e5%9b%be%e7%89%87%5c13_3.png 2x"
+        data-sizes="auto"
+        alt="..\md图片\13_3.png"
+        title="..\md图片\13_3.png" /></p>
+<h3 id="22-键空间的增删改查">2.2 键空间的增删改查</h3>
+<h4 id="221-添加和修改键">2.2.1 添加和修改键</h4>
+<p>添加新键值对和修改键值的操作是一样的，区别在于键是新的还是旧的。</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">对象</th>
+<th style="text-align:center">命令</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">字符串对象</td>
+<td style="text-align:center">SET date 2020/1/1</td>
+</tr>
+<tr>
+<td style="text-align:center"></td>
+<td style="text-align:center">MSET date1 19 date2 20</td>
+</tr>
+<tr>
+<td style="text-align:center">哈希对象</td>
+<td style="text-align:center">HSET book name C++primer</td>
+</tr>
+<tr>
+<td style="text-align:center"></td>
+<td style="text-align:center">HMSET fruit name apple size large</td>
+</tr>
+<tr>
+<td style="text-align:center">列表对象</td>
+<td style="text-align:center">LSET cloth 0 shirt</td>
+</tr>
+<tr>
+<td style="text-align:center"></td>
+<td style="text-align:center">LPUSH food potato</td>
+</tr>
+<tr>
+<td style="text-align:center"></td>
+<td style="text-align:center">RPUSH brand apple</td>
+</tr>
+<tr>
+<td style="text-align:center"></td>
+<td style="text-align:center">LRANGE level 0 5</td>
+</tr>
+<tr>
+<td style="text-align:center">集合对象</td>
+<td style="text-align:center">SADD occupation firefighter</td>
+</tr>
+<tr>
+<td style="text-align:center">有序集合</td>
+<td style="text-align:center">ZADD grade 87 tom 65 terry</td>
+</tr>
+</tbody>
+</table>
+<h3 id="222-删除键">2.2.2 删除键</h3>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">对象</th>
+<th style="text-align:center">命令</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">字符串对象</td>
+<td style="text-align:center">DEL date</td>
+</tr>
+<tr>
+<td style="text-align:center">哈希对象</td>
+<td style="text-align:center">HDEL myhash field1 myhash field2</td>
+</tr>
+<tr>
+<td style="text-align:center">列表对象</td>
+<td style="text-align:center">BLPOP list1 100</td>
+</tr>
+<tr>
+<td style="text-align:center"></td>
+<td style="text-align:center">BRPOP list1 150</td>
+</tr>
+<tr>
+<td style="text-align:center"></td>
+<td style="text-align:center">LPOP list2</td>
+</tr>
+<tr>
+<td style="text-align:center"></td>
+<td style="text-align:center">LREM list3 -2 &ldquo;hello&rdquo;</td>
+</tr>
+<tr>
+<td style="text-align:center">集合对象</td>
+<td style="text-align:center">SPOP food &ldquo;rice&rdquo;</td>
+</tr>
+<tr>
+<td style="text-align:center"></td>
+<td style="text-align:center">SREM food &ldquo;noodle&rdquo;</td>
+</tr>
+<tr>
+<td style="text-align:center">有序集合</td>
+<td style="text-align:center">ZREM website google.com</td>
+</tr>
+<tr>
+<td style="text-align:center"></td>
+<td style="text-align:center">ZREMRANGEBYLEX drink [sprit (coco</td>
+</tr>
+<tr>
+<td style="text-align:center"></td>
+<td style="text-align:center">ZREMRANGEBYRANK salary 0 2</td>
+</tr>
+<tr>
+<td style="text-align:center"></td>
+<td style="text-align:center">ZREMRANGEBYSCORE salary 1500 3500</td>
+</tr>
+</tbody>
+</table>
+<p>POP在删除的同时，会返回结果，打印到控制台，而REM则是单纯的删除。BLPOP在移除元素时，如果列表没有元素则会等待至超时或发现元素为止。</p>
+<p>有序集合范围删除中，LEX表示键，[(表示区间开闭。而<code>ZREMRANGEBYRANK salary 0 2</code>表示删除salary最高的三个。</p>
+<h3 id="223-查询键">2.2.3 查询键</h3>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">对象</th>
+<th style="text-align:center">命令</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">字符串对象</td>
+<td style="text-align:center">GET time</td>
+</tr>
+<tr>
+<td style="text-align:center"></td>
+<td style="text-align:center">MGET time1 time2</td>
+</tr>
+<tr>
+<td style="text-align:center">哈希对象</td>
+<td style="text-align:center">HGET site baidu</td>
+</tr>
+<tr>
+<td style="text-align:center"></td>
+<td style="text-align:center">HMGET site baidu google</td>
+</tr>
+<tr>
+<td style="text-align:center"></td>
+<td style="text-align:center">HGETALL site</td>
+</tr>
+<tr>
+<td style="text-align:center"></td>
+<td style="text-align:center">HKEYS site</td>
+</tr>
+<tr>
+<td style="text-align:center">列表对象</td>
+<td style="text-align:center">LINDEX mylist 2</td>
+</tr>
+<tr>
+<td style="text-align:center"></td>
+<td style="text-align:center">LRANGE mylist 0 2</td>
+</tr>
+<tr>
+<td style="text-align:center">集合对象</td>
+<td style="text-align:center">SISMEMBER myset1 &ldquo;hello&rdquo;</td>
+</tr>
+<tr>
+<td style="text-align:center">有序集合</td>
+<td style="text-align:center">&hellip;</td>
+</tr>
+<tr>
+<td style="text-align:center">HGET是根据键返回值，HGETALL则返回所有键值对，HKEYS返回所有键。列表对象根据主要根据下标返回结果。</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="三过期键">三、过期键</h2>
+<h3 id="31-设置过期时间">3.1 设置过期时间</h3>
+<p>通过EXPIRE命令或者PEXPIRE命令，客户端可以以秒或者毫秒精度某个键设置生存时间（Time To Live，TTL），在经过指定的秒数或者毫秒数之后，服务器就会自动删除生存时间为0的键：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-bash" data-lang="bash">redis&gt; SET key value
+OK
+
+redis&gt; EXPIRE key <span class="m">5</span>
+<span class="o">(</span>integer<span class="o">)</span> <span class="m">1</span>
+
+redis&gt; GET key // 5秒之内
+<span class="s2">&#34;value&#34;</span>
+redis&gt; GET key // 5秒之后
+<span class="o">(</span>nil<span class="o">)</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>与前面相似，客户端可以通过EXPIREAT命令或PEXPIREAT命令，以秒或者毫秒精度给数据库中的某个键设置过期时间（expire time）。过期时间由UNIX时间戳表示。</p>
+<p>而TTL命令和PTTL命令则返回一个键的剩余生存时间。</p>
+<p>所有的命令在Redis中最终都会转化为PEXPIREAT执行。</p>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="..%5cmd%e5%9b%be%e7%89%87%5c13_4.png"
+        data-srcset="..%5cmd%e5%9b%be%e7%89%87%5c13_4.png, ..%5cmd%e5%9b%be%e7%89%87%5c13_4.png 1.5x, ..%5cmd%e5%9b%be%e7%89%87%5c13_4.png 2x"
+        data-sizes="auto"
+        alt="..\md图片\13_4.png"
+        title="..\md图片\13_4.png" /></p>
+<p>在RedisDb结构中，在键空间之外，有一个expires字典专门保存所有键的过期时间，我们称之为过期字典。过期字典保存的值是long long 类型整数，保存一个毫秒精度的UNIX时间戳。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="k">typedef</span> <span class="k">struct</span> <span class="n">redisDb</span> 
+<span class="p">{</span> <span class="c1">// ... 
+</span><span class="c1"></span>    <span class="c1">// 过期字典，保存着键的过期时间 
+</span><span class="c1"></span>    <span class="n">dict</span> <span class="o">*</span><span class="n">expires</span><span class="p">;</span> 
+    <span class="c1">// ...
+</span><span class="c1"></span><span class="p">}</span> <span class="n">redisDb</span><span class="p">;</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>虽然键空间和过期时间都有相同的键，但他们以指针形式指向同一个键，不会造成空间浪费。
+<img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="..%5cmd%e5%9b%be%e7%89%87%5c13_5.png"
+        data-srcset="..%5cmd%e5%9b%be%e7%89%87%5c13_5.png, ..%5cmd%e5%9b%be%e7%89%87%5c13_5.png 1.5x, ..%5cmd%e5%9b%be%e7%89%87%5c13_5.png 2x"
+        data-sizes="auto"
+        alt="..\md图片\13_5.png"
+        title="..\md图片\13_5.png" /></p>
+<h3 id="32-移除过期时间--计算并返回剩余ttl">3.2 移除过期时间 &amp; 计算并返回剩余TTL</h3>
+<p>移除过期时间</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-bash" data-lang="bash">redis &gt; EXPIRE key <span class="m">123123123</span>
+<span class="m">1</span>
+
+redis &gt; TTL key
+<span class="m">123123117</span>
+
+redis &gt; PERSIST key
+<span class="m">1</span>
+
+redis &gt; TTL key
+-1
+</code></pre></td></tr></table>
+</div>
+</div><p>计算并返回剩余TTL</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-bash" data-lang="bash">reids&gt; EXPIRE key <span class="m">123123123</span>
+<span class="m">1</span>
+
+redis&gt; TTL key
+<span class="m">123123118</span>
+
+redis &gt; PTTL key
+<span class="m">123123113900</span>
+</code></pre></td></tr></table>
+</div>
+</div><h3 id="33-过期键的删除策略">3.3 过期键的删除策略</h3>
+<p>通过过期字典知道了哪些键已经过期，那么 <strong>过期的键什么时候会被删除呢？</strong> 删除策略有三种：</p>
+<ul>
+<li>定时删除：在设置键的过期时间的同时，创建一个定时器（timer），定时结束后删除。</li>
+<li>惰性删除：放着不管，每次从键空间获取时检查是否过期，过期就删除。</li>
+<li>定期删除：每隔一段时间，程序检查一次数据库，删除过期键。</li>
+</ul>
+<p><strong>（1）定时删除</strong></p>
+<p>定时删除有利于内存管理，但对CPU不友好。如果过期键太多，删除会占用相当一部分CPU。</p>
+<p>所以策略应该是：当有大量命令请求服务器处理时，并且服务器内存充足，就应该优先将CPU资源安排在处理客户端请求上，而不是删除过期键。</p>
+<p>创建一个定时器需要用到Redis服务器中的时间事件，而当前时间事件的实现方式——无序链表，查找一个事件的时间复杂度为$O(N)$，并不能高效地处理大量时间事件。</p>
+<p><strong>（2）惰性删除</strong></p>
+<p>对CPU最友好，但浪费内存。如果数据库中有很多过期键，而这些过期键永远也不会被访问的话，他们就会永远占据空间，可视为内存泄漏。</p>
+<p>一些和时间有关的数据，比如日志，在某个时间点后，他们的访问就会很少。如果这类过期数据大量积压，会造成严重的内存浪费。</p>
+<p><strong>（3）定期删除</strong></p>
+<p>定期删除是一种折中，通过选择较为空闲的时间点来处理过期键，减少CPU压力。同时也能及时释放内存，避免内存泄漏。</p>
+<hr>
+<p><strong>在Redis中，实际使用的是惰性删除和定期删除这两种。</strong></p>
+<p><strong>（1）Redis中的惰性删除</strong></p>
+<p>存在于<code>db.c/expireIfNeeded</code>函数。所有读写数据库的Redis命令在执行之前都会调用<code>expireIfNeeded</code>函数对输入键进行检查：</p>
+<ul>
+<li>过期，函数将输入键删除</li>
+<li>不过期，函数不动作</li>
+</ul>
+<p><strong>（2）Redis中的定期删除</strong></p>
+<p>过期键的定期删除策略由<code>redis.c/activeExpireCycle</code>函数实现，每当Redis的服务器周期性操作<code>redis.c/serverCron</code>函数执行时，<code>activeExpireCycle</code>函数就会被调用，它在规定的时间内，分多次遍历服务器中的各个数据库，从数据库的<code>expires</code>字典中随机检查一部分键的过期时间，并删除其中的过期键。</p>
+<p>全局变量<code>current_db</code>会记录当前<code>activeExpireCycle</code>函数检查的进度，并在下一次检查时接着上一次的进度进行处理。比如说，如果当前<code>activeExpireCycle</code>函数在遍历10号数据库时返回了，那么下次就会从11号数据库开始工作。</p>
+<p>如果所有数据库都被检查了一遍，则<code>current_db</code>将会被置0，然后开始新一轮检查。</p>
+<h2 id="四数据库通知">四、数据库通知</h2>
+<p>通知是Redis2.8新增的功能，可以让客户端通过订阅给定的频道或者模式，来获知数据库中键的变化，以及数据库中命令的执行情况。</p>
+<h3 id="41-订阅通知">4.1 订阅通知</h3>
+<p>订阅有两种模式：</p>
+<ul>
+<li>订阅某一个键，返回键的所有操作</li>
+<li>订阅某一个操作，返回执行这个操作的键</li>
+</ul>
+<p>情况1，从0号数据库订阅了键message的消息。如果此时有其他客户端操作了message，则会将消息通知到此处。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-bash" data-lang="bash">127.0.0.1:6379&gt; SUBSCRIBE _ _keyspace@0_ _:message
+Reading messages... <span class="o">(</span>press Ctrl-C to quit<span class="o">)</span>
+
+1<span class="o">)</span> <span class="s2">&#34;subscribe&#34;</span> // 订阅信息
+2<span class="o">)</span> <span class="s2">&#34;__keyspace@0__:message&#34;</span>
+3<span class="o">)</span> <span class="o">(</span>integer<span class="o">)</span> <span class="m">1</span>
+
+1<span class="o">)</span> <span class="s2">&#34;message&#34;</span> //执行SET命令
+2<span class="o">)</span> <span class="s2">&#34;_ _keyspace@0_ _:message&#34;</span>
+3<span class="o">)</span> <span class="s2">&#34;set&#34;</span>
+
+1<span class="o">)</span> <span class="s2">&#34;message&#34;</span> //执行EXPIRE命令
+2<span class="o">)</span> <span class="s2">&#34;_ _keyspace@0_ _:message&#34;</span>
+3<span class="o">)</span> <span class="s2">&#34;expire&#34;</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>情况2，客户端订阅了0号数据库中的DEL命令。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-bash" data-lang="bash">127.0.0.1:6379&gt; SUBSCRIBE _ _keyevent@0_ _:del
+Reading messages... <span class="o">(</span>press Ctrl-C to quit<span class="o">)</span>
+1<span class="o">)</span> <span class="s2">&#34;subscribe&#34;</span> // 订阅信息
+2<span class="o">)</span> <span class="s2">&#34;_ _keyevent@0_ _:del&#34;</span>
+3<span class="o">)</span> <span class="o">(</span>integer<span class="o">)</span> <span class="m">1</span>
+
+1<span class="o">)</span> <span class="s2">&#34;message&#34;</span> //键key执行了DEL命令
+2<span class="o">)</span> <span class="s2">&#34;_ _keyevent@0_ _:del&#34;</span>
+3<span class="o">)</span> <span class="s2">&#34;key&#34;</span>
+
+1<span class="o">)</span> <span class="s2">&#34;message&#34;</span> //键number执行了DEL命令
+2<span class="o">)</span> <span class="s2">&#34;_ _keyevent@0_ _:del&#34;</span>
+3<span class="o">)</span> <span class="s2">&#34;number&#34;</span>
+</code></pre></td></tr></table>
+</div>
+</div><h3 id="42-发送通知">4.2 发送通知</h3>
+<p>发送数据库通知的功能是由<code>notify.c/notifyKeyspaceEvent</code>函数实现，函数声明如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="kt">void</span> <span class="nf">notifyKeyspaceEvent</span><span class="p">(</span><span class="kt">int</span> <span class="n">type</span><span class="p">,</span><span class="kt">char</span> <span class="o">*</span><span class="n">event</span><span class="p">,</span><span class="n">robj</span> <span class="o">*</span><span class="n">key</span><span class="p">,</span><span class="kt">int</span> <span class="n">dbid</span><span class="p">);</span>
+</code></pre></td></tr></table>
+</div>
+</div><p><code>type</code>参数是发送的通知的类型，<code>event</code>、<code>keys</code>和<code>dbid</code>分别是事件的名称、产生事件的键，以及产生事件的数据库编号，函数会根据type参数以及这三个参数来构建事件通知的内容，以及接收通知的频道名。</p>
+<p>比如SADD命令的实现函数中，通知的发送方式是</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="kt">void</span> <span class="nf">saddCommand</span><span class="p">(</span><span class="n">redisClient</span><span class="o">*</span> <span class="n">c</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="c1">//...
+</span><span class="c1"></span>    <span class="k">if</span><span class="p">(</span><span class="n">added</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="c1">//...添加成功，发送通知
+</span><span class="c1"></span>       	<span class="n">notifyKeyspaceEvent</span><span class="p">(</span><span class="n">REDIS_NOTIFY_SET</span><span class="p">,</span><span class="s">&#34;add&#34;</span><span class="p">,</span><span class="n">c</span><span class="o">-&gt;</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="n">c</span><span class="o">-&gt;</span><span class="n">db</span><span class="o">-&gt;</span><span class="n">id</span><span class="p">);</span>
+        <span class="c1">//...
+</span><span class="c1"></span>    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>当SADD命令成功地向集合添加了一个集合元素之后，命令就会发送通知，该通知的类型为REDIS_NOTIFY_SET（表示这是一个集合键通知），名称为sadd（表示这是执行SADD命令所产生的通知）。</p>
+<p>发布时调用的<code>notifyKeyspaceEvent</code>函数逻辑是：</p>
+<ol>
+<li>检查服务器是否允许发送此类通知，如果不允许就返回</li>
+<li>是否允许发送键空间通知（4.1提到的情况1），允许就发送</li>
+<li>是否允许发送键事件通知（4.2提到的情况2），允许就发送</li>
+</ol>
+</div><div class="post-footer" id="post-footer">
+    <div class="post-info">
+        <div class="post-info-line">
+            <div class="post-info-mod">
+                <span>更新于 2020-12-07</span>
+            </div>
+            <div class="post-info-license"></div>
+        </div>
+        <div class="post-info-line">
+            <div class="post-info-md"><span>
+                            <a class="link-to-markdown" href="/3.%E6%95%B0%E6%8D%AE%E5%BA%93/index.md" target="_blank">阅读原始文档</a>
+                        </span></div>
+            <div class="post-info-share">
+                <span></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="post-info-more">
+        <section class="post-tags"><i class="fas fa-tags fa-fw"></i>&nbsp;<a href="/tags/redis/">Redis</a>,&nbsp;<a href="/tags/%E9%98%85%E8%AF%BB/">阅读</a></section>
+        <section>
+            <span><a href="javascript:void(0);" onclick="window.history.back();">返回</a></span>&nbsp;|&nbsp;<span><a href="/">主页</a></span>
+        </section>
+    </div>
+
+    <div class="post-nav"><a href="/1.%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/" class="prev" rel="prev" title="《Redis设计与实现》（一）数据结构"><i class="fas fa-angle-left fa-fw"></i>《Redis设计与实现》（一）数据结构</a>
+            <a href="/4.%E6%8C%81%E4%B9%85%E5%8C%96/" class="next" rel="next" title="《Redis设计与实现》（四）持久化">《Redis设计与实现》（四）持久化<i class="fas fa-angle-right fa-fw"></i></a></div>
+</div>
+<div id="comments"><div id="valine" class="comment"></div><noscript>
+                Please enable JavaScript to view the comments powered by <a href="https://valine.js.org/">Valine</a>.
+            </noscript></div></article></div>
+            </main><footer class="footer">
+        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.79.1">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
+                </div><div class="footer-line"><i class="far fa-copyright fa-fw"></i><span itemprop="copyrightYear">2020</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="/" target="_blank">lnback</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
+        </div>
+    </footer></div>
+
+        <div id="fixed-buttons"><a href="#" id="back-to-top" class="fixed-button" title="回到顶部">
+                <i class="fas fa-arrow-up fa-fw"></i>
+            </a><a href="#" id="view-comments" class="fixed-button" title="查看评论">
+                <i class="fas fa-comment fa-fw"></i>
+            </a>
+        </div><link rel="stylesheet" href="/lib/valine/valine.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery.js@1.2.0/dist/css/lightgallery.min.css"><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/valine@1.4.14/dist/Valine.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/smooth-scroll@16.1.3/dist/smooth-scroll.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/autocomplete.js@0.37.1/dist/autocomplete.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/algoliasearch@4.2.0/dist/algoliasearch-lite.umd.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lazysizes@5.2.2/lazysizes.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lightgallery.js@1.2.0/dist/js/lightgallery.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lg-thumbnail.js@1.2.0/dist/lg-thumbnail.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lg-zoom.js@1.2.0/dist/lg-zoom.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/clipboard@2.0.6/dist/clipboard.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/sharer.js@0.4.0/sharer.min.js"></script><script type="text/javascript">window.config={"code":{"copyTitle":"复制到剪贴板","maxShownLines":10},"comment":{"valine":{"appId":"QGzwQXOqs5JOhN4RGPOkR2mR-MdYXbMMI","appKey":"WBmoGyJtbqUswvfLh6L8iEBr","avatar":"mp","el":"#valine","emojiCDN":"https://cdn.jsdelivr.net/npm/emoji-datasource-google@5.0.1/img/google/64/","emojiMaps":{"100":"1f4af.png","alien":"1f47d.png","anger":"1f4a2.png","angry":"1f620.png","anguished":"1f627.png","astonished":"1f632.png","black_heart":"1f5a4.png","blue_heart":"1f499.png","blush":"1f60a.png","bomb":"1f4a3.png","boom":"1f4a5.png","broken_heart":"1f494.png","brown_heart":"1f90e.png","clown_face":"1f921.png","cold_face":"1f976.png","cold_sweat":"1f630.png","confounded":"1f616.png","confused":"1f615.png","cry":"1f622.png","crying_cat_face":"1f63f.png","cupid":"1f498.png","dash":"1f4a8.png","disappointed":"1f61e.png","disappointed_relieved":"1f625.png","dizzy":"1f4ab.png","dizzy_face":"1f635.png","drooling_face":"1f924.png","exploding_head":"1f92f.png","expressionless":"1f611.png","face_vomiting":"1f92e.png","face_with_cowboy_hat":"1f920.png","face_with_hand_over_mouth":"1f92d.png","face_with_head_bandage":"1f915.png","face_with_monocle":"1f9d0.png","face_with_raised_eyebrow":"1f928.png","face_with_rolling_eyes":"1f644.png","face_with_symbols_on_mouth":"1f92c.png","face_with_thermometer":"1f912.png","fearful":"1f628.png","flushed":"1f633.png","frowning":"1f626.png","ghost":"1f47b.png","gift_heart":"1f49d.png","green_heart":"1f49a.png","grimacing":"1f62c.png","grin":"1f601.png","grinning":"1f600.png","hankey":"1f4a9.png","hear_no_evil":"1f649.png","heart":"2764-fe0f.png","heart_decoration":"1f49f.png","heart_eyes":"1f60d.png","heart_eyes_cat":"1f63b.png","heartbeat":"1f493.png","heartpulse":"1f497.png","heavy_heart_exclamation_mark_ornament":"2763-fe0f.png","hole":"1f573-fe0f.png","hot_face":"1f975.png","hugging_face":"1f917.png","hushed":"1f62f.png","imp":"1f47f.png","innocent":"1f607.png","japanese_goblin":"1f47a.png","japanese_ogre":"1f479.png","joy":"1f602.png","joy_cat":"1f639.png","kiss":"1f48b.png","kissing":"1f617.png","kissing_cat":"1f63d.png","kissing_closed_eyes":"1f61a.png","kissing_heart":"1f618.png","kissing_smiling_eyes":"1f619.png","laughing":"1f606.png","left_speech_bubble":"1f5e8-fe0f.png","love_letter":"1f48c.png","lying_face":"1f925.png","mask":"1f637.png","money_mouth_face":"1f911.png","nauseated_face":"1f922.png","nerd_face":"1f913.png","neutral_face":"1f610.png","no_mouth":"1f636.png","open_mouth":"1f62e.png","orange_heart":"1f9e1.png","partying_face":"1f973.png","pensive":"1f614.png","persevere":"1f623.png","pleading_face":"1f97a.png","pouting_cat":"1f63e.png","purple_heart":"1f49c.png","rage":"1f621.png","relaxed":"263a-fe0f.png","relieved":"1f60c.png","revolving_hearts":"1f49e.png","right_anger_bubble":"1f5ef-fe0f.png","robot_face":"1f916.png","rolling_on_the_floor_laughing":"1f923.png","scream":"1f631.png","scream_cat":"1f640.png","see_no_evil":"1f648.png","shushing_face":"1f92b.png","skull":"1f480.png","skull_and_crossbones":"2620-fe0f.png","sleeping":"1f634.png","sleepy":"1f62a.png","slightly_frowning_face":"1f641.png","slightly_smiling_face":"1f642.png","smile":"1f604.png","smile_cat":"1f638.png","smiley":"1f603.png","smiley_cat":"1f63a.png","smiling_face_with_3_hearts":"1f970.png","smiling_imp":"1f608.png","smirk":"1f60f.png","smirk_cat":"1f63c.png","sneezing_face":"1f927.png","sob":"1f62d.png","space_invader":"1f47e.png","sparkling_heart":"1f496.png","speak_no_evil":"1f64a.png","speech_balloon":"1f4ac.png","star-struck":"1f929.png","stuck_out_tongue":"1f61b.png","stuck_out_tongue_closed_eyes":"1f61d.png","stuck_out_tongue_winking_eye":"1f61c.png","sunglasses":"1f60e.png","sweat":"1f613.png","sweat_drops":"1f4a6.png","sweat_smile":"1f605.png","thinking_face":"1f914.png","thought_balloon":"1f4ad.png","tired_face":"1f62b.png","triumph":"1f624.png","two_hearts":"1f495.png","unamused":"1f612.png","upside_down_face":"1f643.png","weary":"1f629.png","white_frowning_face":"2639-fe0f.png","white_heart":"1f90d.png","wink":"1f609.png","woozy_face":"1f974.png","worried":"1f61f.png","yawning_face":"1f971.png","yellow_heart":"1f49b.png","yum":"1f60b.png","zany_face":"1f92a.png","zipper_mouth_face":"1f910.png","zzz":"1f4a4.png"},"enableQQ":false,"highlight":true,"lang":"zh-cn","pageSize":10,"placeholder":"你的评论 ...","recordIP":true,"serverURLs":"https://leancloud.hugoloveit.com","visitor":true}},"lightGallery":{"actualSize":false,"exThumbImage":"data-thumbnail","hideBarsDelay":2000,"selector":".lightgallery","speed":400,"thumbContHeight":80,"thumbWidth":80,"thumbnail":true},"search":{"algoliaAppID":"4G4N2WV1XL","algoliaIndex":"index.zh-cn","algoliaSearchKey":"199dbfba1469d7cc46c636a26f72a8c7","highlightTag":"em","maxResultLength":10,"noResultsFound":"没有找到结果","snippetLength":50,"type":"algolia"}};</script><script type="text/javascript" src="/js/theme.min.js"></script></body>
+</html>

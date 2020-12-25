@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="robots" content="noodp" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1">
+        <title>《Redis设计与实现》（七）复制 - lnback&#39; s blog</title><meta name="Description" content="LLY 的个人博客"><meta property="og:title" content="《Redis设计与实现》（七）复制" />
+<meta property="og:description" content="复制 本章将介绍2.8以前的老版复制功能和2.8以后的新版复制功能，讲解机制和优劣势。 在Redis中，用户可以通过执行SLAVEOF命令或者设" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://example.com/7.%E5%A4%8D%E5%88%B6/" />
+<meta property="og:image" content="https://example.com/logo.png"/>
+<meta property="article:published_time" content="2020-12-15T10:26:30+08:00" />
+<meta property="article:modified_time" content="2020-12-15T10:26:30+08:00" />
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://example.com/logo.png"/>
+
+<meta name="twitter:title" content="《Redis设计与实现》（七）复制"/>
+<meta name="twitter:description" content="复制 本章将介绍2.8以前的老版复制功能和2.8以后的新版复制功能，讲解机制和优劣势。 在Redis中，用户可以通过执行SLAVEOF命令或者设"/>
+<meta name="application-name" content="lnback">
+<meta name="apple-mobile-web-app-title" content="lnback"><meta name="theme-color" content="#ffffff"><meta name="msapplication-TileColor" content="#da532c"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="https://example.com/7.%E5%A4%8D%E5%88%B6/" /><link rel="prev" href="https://example.com/6.%E5%AE%A2%E6%88%B7%E7%AB%AF%E5%92%8C%E6%9C%8D%E5%8A%A1%E5%99%A8/" /><link rel="next" href="https://example.com/nginx/" /><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/normalize.css@8.0.1/normalize.min.css"><link rel="stylesheet" href="/css/style.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.13.0/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.7.2/animate.min.css"><script type="application/ld+json">
+    {
+        "@context": "http://schema.org",
+        "@type": "BlogPosting",
+        "headline": "《Redis设计与实现》（七）复制",
+        "inLanguage": "zh-CN",
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "https:\/\/example.com\/7.%E5%A4%8D%E5%88%B6\/"
+        },"genre": "posts","keywords": "Redis, 阅读","wordcount":  3666 ,
+        "url": "https:\/\/example.com\/7.%E5%A4%8D%E5%88%B6\/","datePublished": "2020-12-15T10:26:30+08:00","dateModified": "2020-12-15T10:26:30+08:00","license": "This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.","publisher": {
+            "@type": "Organization",
+            "name": "xxxx","logo": "https:\/\/example.com\/images\/avatar.png"},"author": {
+                "@type": "Person",
+                "name": "lnback"
+            },"description": ""
+    }
+    </script></head>
+    <body header-desktop="fixed" header-mobile="auto"><script type="text/javascript">(window.localStorage && localStorage.getItem('theme') ? localStorage.getItem('theme') === 'dark' : ('auto' === 'auto' ? window.matchMedia('(prefers-color-scheme: dark)').matches : 'auto' === 'dark')) && document.body.setAttribute('theme', 'dark');</script>
+
+        <div id="mask"></div><div class="wrapper"><header class="desktop" id="header-desktop">
+    <div class="header-wrapper">
+        <div class="header-title">
+            <a href="/" title="lnback&#39; s blog">lnback</a>
+        </div>
+        <div class="menu">
+            <div class="menu-inner"><a class="menu-item" href="/posts/"> 所有文章 </a><a class="menu-item" href="/tags/"> 标签 </a><a class="menu-item" href="/categories/"> 分类 </a><a class="menu-item" href="/about/about"> 关于 </a><a class="menu-item" href="https://github.com/lnback" title="GitHub" rel="noopener noreffer" target="_blank"><i class='fab fa-github fa-fw'></i>  </a><span class="menu-item delimiter"></span><span class="menu-item search" id="search-desktop">
+                        <input type="text" placeholder="搜索文章标题或内容..." id="search-input-desktop">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-desktop" title="搜索">
+                            <i class="fas fa-search fa-fw"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-desktop" title="清空">
+                            <i class="fas fa-times-circle fa-fw"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-desktop">
+                            <i class="fas fa-spinner fa-fw fa-spin"></i>
+                        </span>
+                    </span><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
+                    <i class="fas fa-adjust fa-fw"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</header><header class="mobile" id="header-mobile">
+    <div class="header-container">
+        <div class="header-wrapper">
+            <div class="header-title">
+                <a href="/" title="lnback&#39; s blog">lnback</a>
+            </div>
+            <div class="menu-toggle" id="menu-toggle-mobile">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+        <div class="menu" id="menu-mobile"><div class="search-wrapper">
+                    <div class="search mobile" id="search-mobile">
+                        <input type="text" placeholder="搜索文章标题或内容..." id="search-input-mobile">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-mobile" title="搜索">
+                            <i class="fas fa-search fa-fw"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-mobile" title="清空">
+                            <i class="fas fa-times-circle fa-fw"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-mobile">
+                            <i class="fas fa-spinner fa-fw fa-spin"></i>
+                        </span>
+                    </div>
+                    <a href="javascript:void(0);" class="search-cancel" id="search-cancel-mobile">
+                        取消
+                    </a>
+                </div><a class="menu-item" href="/posts/" title="">所有文章</a><a class="menu-item" href="/tags/" title="">标签</a><a class="menu-item" href="/categories/" title="">分类</a><a class="menu-item" href="/about/about" title="">关于</a><a class="menu-item" href="https://github.com/lnback" title="GitHub" rel="noopener noreffer" target="_blank"><i class='fab fa-github fa-fw'></i></a><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
+                <i class="fas fa-adjust fa-fw"></i>
+            </a></div>
+    </div>
+</header>
+<div class="search-dropdown desktop">
+    <div id="search-dropdown-desktop"></div>
+</div>
+<div class="search-dropdown mobile">
+    <div id="search-dropdown-mobile"></div>
+</div>
+<main class="main">
+                <div class="container"><div class="toc" id="toc-auto">
+            <h2 class="toc-title">目录</h2>
+            <div class="toc-content" id="toc-content-auto"></div>
+        </div><article class="page single"><h1 class="single-title animated flipInX">《Redis设计与实现》（七）复制</h1><div class="post-meta">
+            <div class="post-meta-line"><span class="post-author"><a href="/" title="Author" rel=" author" class="author"><i class="fas fa-user-circle fa-fw"></i>lnback</a></span>&nbsp;<span class="post-category">收录于 <a href="/categories/redis/"><i class="far fa-folder fa-fw"></i>redis</a></span></div>
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2020-12-15">2020-12-15</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 3666 字&nbsp;
+                <i class="far fa-clock fa-fw"></i>&nbsp;预计阅读 8 分钟&nbsp;<span id="/7.%E5%A4%8D%E5%88%B6/" class="leancloud_visitors" data-flag-title="《Redis设计与实现》（七）复制">
+                        <i class="far fa-eye fa-fw"></i>&nbsp;<span class=leancloud-visitors-count></span>&nbsp;次阅读
+                    </span>&nbsp;</div>
+        </div><div class="details toc" id="toc-static"  kept="">
+                <div class="details-summary toc-title">
+                    <span>目录</span>
+                    <span><i class="details-icon fas fa-angle-right"></i></span>
+                </div>
+                <div class="details-content toc-content" id="toc-content-static"><nav id="TableOfContents">
+  <ul>
+    <li><a href="#一旧版复制">一、旧版复制</a>
+      <ul>
+        <li><a href="#11-旧版复制的实现">1.1 旧版复制的实现</a>
+          <ul>
+            <li><a href="#111-同步">1.1.1 同步</a></li>
+            <li><a href="#112-命令传播">1.1.2 命令传播</a></li>
+          </ul>
+        </li>
+        <li><a href="#12-旧版复制的缺陷">1.2 旧版复制的缺陷</a></li>
+      </ul>
+    </li>
+    <li><a href="#二新版复制">二、新版复制</a>
+      <ul>
+        <li><a href="#21-新版复制功能的实现">2.1 新版复制功能的实现</a>
+          <ul>
+            <li><a href="#211-复制偏移量">2.1.1 复制偏移量</a></li>
+            <li><a href="#212-复制积压缓冲区">2.1.2 复制积压缓冲区</a></li>
+            <li><a href="#213-服务器运行id">2.1.3 服务器运行ID</a></li>
+          </ul>
+        </li>
+        <li><a href="#22-psync命令的实现">2.2 PSYNC命令的实现</a></li>
+        <li><a href="#23-新版复制的完整流程">2.3 新版复制的完整流程</a></li>
+      </ul>
+    </li>
+    <li><a href="#三心跳检测">三、心跳检测</a>
+      <ul>
+        <li><a href="#31-检测连接状态">3.1 检测连接状态</a></li>
+        <li><a href="#32-辅助实现min-slaves选项">3.2 辅助实现min-slaves选项</a></li>
+        <li><a href="#33-检测命令丢失">3.3 检测命令丢失</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav></div>
+            </div><div class="content" id="content"><h1 id="复制">复制</h1>
+<p>本章将介绍2.8以前的老版复制功能和2.8以后的新版复制功能，讲解机制和优劣势。</p>
+<p>在Redis中，用户可以通过执行SLAVEOF命令或者设置slaveof选项，让一个服务器去复制另一个服务器，我们称呼被复制的服务器为主服务器（master），而对主服务器进行复制的服务器则被称为从服务器（slave）。搞清楚关系，如果服务器A输入指令SLAVEOF，则A变成B的从服务器。</p>
+<p>进行复制中的主从服务器双方的数据库将保存相同的数据，概念上将这种现象称作“数据库状态一致”，或者简称“一致”。比如，在主服务器上执行命令，</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-bash" data-lang="bash">127.0.0.1:6379&gt; SET msg <span class="s2">&#34;hello world&#34;</span>
+OK
+</code></pre></td></tr></table>
+</div>
+</div><p>则同时可以在从服务器上获取msg键的值，</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-bash" data-lang="bash">127.0.0.1:12345&gt; GET msg
+<span class="s2">&#34;hello world&#34;</span>
+</code></pre></td></tr></table>
+</div>
+</div><h2 id="一旧版复制">一、旧版复制</h2>
+<h3 id="11-旧版复制的实现">1.1 旧版复制的实现</h3>
+<p>Redis的复制功能分为同步和命令传播两个操作：</p>
+<ul>
+<li>同步操作用于将从服务器的数据库状态更新至主服务器当前所处的数据库状态：</li>
+<li>命令传播操作则用于在主服务器的数据库状态被修改，导致主从服务器的数据库状态出现不一致时，让主从服务器的数据库重新回到一致状态</li>
+</ul>
+<h4 id="111-同步">1.1.1 同步</h4>
+<p>从服务器对主服务器的同步操作需要通过向主服务器发送SYNC命令来完成，以下是SYNC命令的执行步骤：</p>
+<ol>
+<li>从服务器向主服务器发送SYNC命令</li>
+<li>主服务器收到后，执行BGSAVE命令，生成RDB文件，并使用缓冲区记录现在开始执行的所有命令。</li>
+<li>将RDB文件发送给从服务器，从服务器收到后更新</li>
+<li>主服务器将缓冲区的内容发送给从服务器，从服务器收到后更新。</li>
+</ol>
+<blockquote>
+<p>BGSAVE命令会增加一个子进程，负责创建RDB文件</p>
+</blockquote>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="..%5cmd%e5%9b%be%e7%89%87%5c17_1.png"
+        data-srcset="..%5cmd%e5%9b%be%e7%89%87%5c17_1.png, ..%5cmd%e5%9b%be%e7%89%87%5c17_1.png 1.5x, ..%5cmd%e5%9b%be%e7%89%87%5c17_1.png 2x"
+        data-sizes="auto"
+        alt="..\md图片\17_1.png"
+        title="..\md图片\17_1.png" /></p>
+<h4 id="112-命令传播">1.1.2 命令传播</h4>
+<p>主服务器会将自己执行的写命令，也即是造成主从服务器不一致的那条写命令，发送给服务器执行，当从服务器执行了相同的写命令之后，主从服务器将再次回到一致状态。</p>
+<h3 id="12-旧版复制的缺陷">1.2 旧版复制的缺陷</h3>
+<p>在Redis中，从服务器对主服务器的复制可以分为以下两种情况：</p>
+<ul>
+<li>初次复制：从服务器以前没有复制过任何主服务器，或者要复制的主服务器和上一次复制的主服务器不同。</li>
+<li>断线后重复制：处于命令传播阶段的主从服务器因为网络原因而中断了复制，但从服务器通过自动重连接重新连上了主服务器，并继续复制主服务器。</li>
+</ul>
+<p>初次复制的效果挺好的，但是断线后重复制效率就很低。因为执行SYNC命令是非常消耗资源的行为</p>
+<h2 id="二新版复制">二、新版复制</h2>
+<h3 id="21-新版复制功能的实现">2.1 新版复制功能的实现</h3>
+<p>Redis从2.8版本开始，使用PSYNC命令代替SYNC命令来执行复制时的同步操作
+PSYNC命令具有<strong>完整同步性和部分重同步两种模式</strong>：</p>
+<ul>
+<li>完整重同步用于初次复制，和SYNV命令完全一致</li>
+<li>部分重同步，将断线后的命令发送给从服务器</li>
+</ul>
+<p>要实现部分重同步，需要完成三个部分：</p>
+<ul>
+<li>主服务器的复制偏移量和从服务器的复制偏移量</li>
+<li>主服务器的复制积压缓冲区</li>
+<li>服务器的运行ID</li>
+</ul>
+<h4 id="211-复制偏移量">2.1.1 复制偏移量</h4>
+<p>主服务器和从服务器会分别维护一个复制偏移量：</p>
+<ul>
+<li>主服务器每次向从服务器传播N个字节的数据时，就将自己的复制偏移量的值加上N</li>
+<li>从服务器每次收到主服务器传播来的N个字节的数据时，就将自己的复制偏移量加上N</li>
+</ul>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="..%5cmd%e5%9b%be%e7%89%87%5c17_2.png"
+        data-srcset="..%5cmd%e5%9b%be%e7%89%87%5c17_2.png, ..%5cmd%e5%9b%be%e7%89%87%5c17_2.png 1.5x, ..%5cmd%e5%9b%be%e7%89%87%5c17_2.png 2x"
+        data-sizes="auto"
+        alt="..\md图片\17_2.png"
+        title="..\md图片\17_2.png" /></p>
+<p><strong>通过对比主从服务器的复制偏移量，程序可以很容易地知道主从服务器是否处于一致状态：</strong></p>
+<ul>
+<li>如果主从服务器处于一致状态，那么主从服务器两者的偏移量总是相同的。</li>
+<li>相反，如果主从服务器两者的偏移量并不相同，那么说明主从服务器并未处于一致状态。</li>
+</ul>
+<h4 id="212-复制积压缓冲区">2.1.2 复制积压缓冲区</h4>
+<p>复制积压缓冲区是由主服务器维护的一个<strong>固定长度</strong>（fixed-size）先进先出（FIFO）队列，默认大小为1MB。当主服务器进行命令传播时，它不仅会将写命令发送给所有从服务器，还会<strong>将写命令入队到复制积压缓冲区里面</strong>。
+<img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="..%5cmd%e5%9b%be%e7%89%87%5c17_3.png"
+        data-srcset="..%5cmd%e5%9b%be%e7%89%87%5c17_3.png, ..%5cmd%e5%9b%be%e7%89%87%5c17_3.png 1.5x, ..%5cmd%e5%9b%be%e7%89%87%5c17_3.png 2x"
+        data-sizes="auto"
+        alt="..\md图片\17_3.png"
+        title="..\md图片\17_3.png" />
+与此同时，主服务器也会向积压缓冲区添加偏移量，
+当服务器重新连接上主服务器时，从服务器会通过PSYNC命令将自己的复制偏移量offset发送给主服务器，<strong>主服务器会根据这个复制偏移量来决定对从服务器执行何种同步操作：</strong></p>
+<ul>
+<li>offset偏移量之后的数据仍然存在于复制积压缓冲区中，主服务器执行部分重同步操作</li>
+<li>反之，偏移量之后的数据已不存在于复制积压缓冲区，则执行完整重同步。</li>
+</ul>
+<p>复制积压缓冲区作为一个<strong>限制性容器</strong>保证了复制的高效性：</p>
+<ul>
+<li>如果断线时间短，错过的命令少，则直接调用偏移量为从服务器补上命令</li>
+<li>反之，则直接完全重同步。</li>
+</ul>
+<h4 id="213-服务器运行id">2.1.3 服务器运行ID</h4>
+<p>每个Redis服务器，不论主服务器还是从服务，都会有自己的运行ID，运行ID在服务器启动时自动生成，由40个随机的十六进制字符组成。</p>
+<p>当从服务器对主服务器进行初次复制时，主服务器会将自己的运行ID传送给从服务器，而从服务器则会将这个运行ID保存起来。</p>
+<p>当从服务器断线并重新连上一个主服务器时，从服务器将向当前连接的主服务器发送之前保存的运行ID：</p>
+<ul>
+<li>如果ID相同，则表示之前同步的主服务器就是这个，执行部分重同步。</li>
+<li>如果ID不同，则表明从服务器断线之前复制的主服务器并不是当前连接的这个主服务器，执行完整重同步操作。</li>
+</ul>
+<h3 id="22-psync命令的实现">2.2 PSYNC命令的实现</h3>
+<p>PSYNC命令的调用方法有两种：</p>
+<ul>
+<li>如果是初次复制，则从服务器发送<code>PSYNC?-1</code>命令，主动请求主服务器进行完整重同步。</li>
+<li>如果已经复制过，则从服务器发送<code>PSYNC&lt;runid&gt;&lt;offset&gt;</code>命令。即：上一次复制的主服务器ID+当前的复制偏移量。</li>
+</ul>
+<p>根据情况，接收到PSYNC命令的主服务器会向从服务器返回以下三种回复的其中一种：</p>
+<p><strong>（1）</strong> 如果主服务器返回<code>+FULLRESYNC &lt;runid&gt; &lt;offset&gt;</code>回复，那么表示主服务器将与从服务器执行完整重同步操作。从服务器将ID保存起来，在下一次PSYNC命令时使用，同时将offset的值当做自己的初始化偏移量。</p>
+<p><strong>（2）</strong> 如果主服务器返回<code>+CONTINUE</code>回复，那么表示主服务器将与从服务器执行部分重同步操作，从服务器只要等着主服务器将自己缺少的那部分数据发送过来就可以了。</p>
+<p><strong>（3）</strong> 如果主服务器返回<code>-ERR</code>回复，那么表示主服务器的版本低于Redis2.8，它识别不了PSYNC命令，从服务器将向主服务器发送SYNC命令，并与主服务器执行完整同步操作。</p>
+<h3 id="23-新版复制的完整流程">2.3 新版复制的完整流程</h3>
+<p>本节主要展示新版复制操作的全过程，假设主服务器IP地址为127.0.0.1端口号为6379，从服务器IP为127.0.0.1端口号12345.</p>
+<p><strong>（1）设置主服务器地址和端口</strong></p>
+<p>当客户端向从服务器发送以下命令时：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-bash" data-lang="bash">127.0.0.1:12345&gt; SLAVEOF 127.0.0.1 <span class="m">6379</span>
+OK
+</code></pre></td></tr></table>
+</div>
+</div><p>从服务器首先要做的就是将客户端给定的主服务器IP地址127.0.0.1以及端口6379保存到服务器状态的masterhost属性和masterport属性里面：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="k">struct</span> <span class="n">redisServer</span><span class="p">{</span>
+    <span class="c1">//...
+</span><span class="c1"></span>    <span class="kt">char</span> <span class="o">*</span><span class="n">masterhost</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="n">masterport</span><span class="p">;</span>
+    <span class="c1">//...
+</span><span class="c1"></span><span class="p">};</span>
+</code></pre></td></tr></table>
+</div>
+</div><p><strong>（2）建立套接字连接</strong></p>
+<p><strong>从服务器</strong>将根据命令所设置的IP地址和端口，创建<strong>连向主服务器</strong>的套接字连接</p>
+<p>此时，从服务器变为了主服务器的客户端。从服务器同时具备服务器和客户端的两个身份。</p>
+<p><strong>（3）发送PING命令</strong></p>
+<p>连接成功后，从服务器立马发送一个PING命令，主要作用是：</p>
+<ul>
+<li>检查套接字读写是否正常</li>
+<li>检查主服务器能否正常处理命令</li>
+</ul>
+<p>回复有三种可能：</p>
+<ul>
+<li>主服务器<strong>返回了命令回复，但从服务器不能再规定的时间内读出，</strong> 表明主从之间网络连接不佳。从服务器<strong>断开并重新创建</strong>连向主服务器的套接字。</li>
+<li>主服务器<strong>返回一个错误</strong>，表示主服务器暂时无法处理请求（比如正在处理一个超时运行脚本），从服务器<strong>断开并重新创建</strong>连向主服务器的套接字。</li>
+<li>从服务器收到PONG回复，表示主从之间连接正常。</li>
+</ul>
+<p><strong>（4）身份验证</strong></p>
+<p>收到pong的回复后，下一步是确定是否进行身份验证：如果从服务器设置了masterauth选项，那么进行身份验证；反之则不进行。</p>
+<p><strong>（5）发送端口信息</strong></p>
+<p>从服务器向主服务器发送从服务器的监听端口号。主服务器在接收到这个命令之后，会将端口号记录在从服务器所对应的客户端状态的slave_listening_port属性中：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="k">typedef</span> <span class="k">struct</span> <span class="n">redisClient</span> 
+<span class="p">{</span> 
+    <span class="c1">// ... 
+</span><span class="c1"></span>    <span class="c1">// 从服务器的监听端口号 
+</span><span class="c1"></span>    <span class="kt">int</span> <span class="n">slave_listening_port</span><span class="p">;</span> 
+    <span class="c1">// ...
+</span><span class="c1"></span><span class="p">}</span> <span class="n">redisClient</span><span class="p">;</span>
+</code></pre></td></tr></table>
+</div>
+</div><p><strong>（6）同步</strong></p>
+<p>在这一步，从服务器将向主服务器发送PSYNC命令，执行同步操作，并将自己的数据库更新至主服务器数据库当前所处的状态。</p>
+<p>在同步操作执行之前，只有从服务器是主服务器的客户端，但是在<strong>执行同步操作之后，主服务器也会成为从服务器的客户端。</strong></p>
+<p><strong>（7）命令传播</strong></p>
+<p>主服务器只要一直将自己执行的写命令发送给从服务器，而从服务器只要一直接收并执行主服务器发来的写命令，就可以保证主从服务器一直保持一致了。</p>
+<h2 id="三心跳检测">三、心跳检测</h2>
+<p>在命令传播阶段，从服务器默认会以每秒一次的频率，向主服务器发送命令：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-bash" data-lang="bash">REPLCONF ACK &lt;replication_offset&gt;
+</code></pre></td></tr></table>
+</div>
+</div><ul>
+<li>检测主从服务器的网络连接状态</li>
+<li>辅助实现min-salves选项</li>
+<li>检测命令丢失</li>
+</ul>
+<h3 id="31-检测连接状态">3.1 检测连接状态</h3>
+<p>如果主服务器超过一秒钟没有收到从服务器发来的REPLCONF ACK命令，那么主服务器就知道主从服务器之间的连接出现问题了</p>
+<h3 id="32-辅助实现min-slaves选项">3.2 辅助实现min-slaves选项</h3>
+<p>Redis的min-slaves-to-write和min-slaves-max-lag两个选项可以防止主服务器在不安全的情况下执行写命令
+举个例子</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="n">min</span><span class="o">-</span><span class="n">slaves</span><span class="o">-</span><span class="n">to</span><span class="o">-</span><span class="n">write</span> <span class="mi">3</span>
+<span class="n">min</span><span class="o">-</span><span class="n">slaves</span><span class="o">-</span><span class="n">max</span><span class="o">-</span><span class="n">lag</span> <span class="mi">10</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>那么在 从服务器的数量少于3个，或者三个从服务器的延迟(lag)值都大于或等于10秒时，主服务器将拒绝执行命令。</p>
+<h3 id="33-检测命令丢失">3.3 检测命令丢失</h3>
+<p>假如主服务器向从服务器传播的命令因为网络问题丢失，会导致二者偏移量不一致。这时心跳检测命令会侦察到这种情况，于是主服务器会补发。</p>
+</div><div class="post-footer" id="post-footer">
+    <div class="post-info">
+        <div class="post-info-line">
+            <div class="post-info-mod">
+                <span>更新于 2020-12-15</span>
+            </div>
+            <div class="post-info-license"></div>
+        </div>
+        <div class="post-info-line">
+            <div class="post-info-md"><span>
+                            <a class="link-to-markdown" href="/7.%E5%A4%8D%E5%88%B6/index.md" target="_blank">阅读原始文档</a>
+                        </span></div>
+            <div class="post-info-share">
+                <span></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="post-info-more">
+        <section class="post-tags"><i class="fas fa-tags fa-fw"></i>&nbsp;<a href="/tags/redis/">Redis</a>,&nbsp;<a href="/tags/%E9%98%85%E8%AF%BB/">阅读</a></section>
+        <section>
+            <span><a href="javascript:void(0);" onclick="window.history.back();">返回</a></span>&nbsp;|&nbsp;<span><a href="/">主页</a></span>
+        </section>
+    </div>
+
+    <div class="post-nav"><a href="/6.%E5%AE%A2%E6%88%B7%E7%AB%AF%E5%92%8C%E6%9C%8D%E5%8A%A1%E5%99%A8/" class="prev" rel="prev" title="《Redis设计与实现》（六）客户端和服务器"><i class="fas fa-angle-left fa-fw"></i>《Redis设计与实现》（六）客户端和服务器</a>
+            <a href="/nginx/" class="next" rel="next" title="Nginx介绍">Nginx介绍<i class="fas fa-angle-right fa-fw"></i></a></div>
+</div>
+<div id="comments"><div id="valine" class="comment"></div><noscript>
+                Please enable JavaScript to view the comments powered by <a href="https://valine.js.org/">Valine</a>.
+            </noscript></div></article></div>
+            </main><footer class="footer">
+        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.79.1">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
+                </div><div class="footer-line"><i class="far fa-copyright fa-fw"></i><span itemprop="copyrightYear">2020</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="/" target="_blank">lnback</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
+        </div>
+    </footer></div>
+
+        <div id="fixed-buttons"><a href="#" id="back-to-top" class="fixed-button" title="回到顶部">
+                <i class="fas fa-arrow-up fa-fw"></i>
+            </a><a href="#" id="view-comments" class="fixed-button" title="查看评论">
+                <i class="fas fa-comment fa-fw"></i>
+            </a>
+        </div><link rel="stylesheet" href="/lib/valine/valine.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery.js@1.2.0/dist/css/lightgallery.min.css"><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/valine@1.4.14/dist/Valine.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/smooth-scroll@16.1.3/dist/smooth-scroll.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/autocomplete.js@0.37.1/dist/autocomplete.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/algoliasearch@4.2.0/dist/algoliasearch-lite.umd.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lazysizes@5.2.2/lazysizes.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lightgallery.js@1.2.0/dist/js/lightgallery.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lg-thumbnail.js@1.2.0/dist/lg-thumbnail.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lg-zoom.js@1.2.0/dist/lg-zoom.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/clipboard@2.0.6/dist/clipboard.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/sharer.js@0.4.0/sharer.min.js"></script><script type="text/javascript">window.config={"code":{"copyTitle":"复制到剪贴板","maxShownLines":10},"comment":{"valine":{"appId":"QGzwQXOqs5JOhN4RGPOkR2mR-MdYXbMMI","appKey":"WBmoGyJtbqUswvfLh6L8iEBr","avatar":"mp","el":"#valine","emojiCDN":"https://cdn.jsdelivr.net/npm/emoji-datasource-google@5.0.1/img/google/64/","emojiMaps":{"100":"1f4af.png","alien":"1f47d.png","anger":"1f4a2.png","angry":"1f620.png","anguished":"1f627.png","astonished":"1f632.png","black_heart":"1f5a4.png","blue_heart":"1f499.png","blush":"1f60a.png","bomb":"1f4a3.png","boom":"1f4a5.png","broken_heart":"1f494.png","brown_heart":"1f90e.png","clown_face":"1f921.png","cold_face":"1f976.png","cold_sweat":"1f630.png","confounded":"1f616.png","confused":"1f615.png","cry":"1f622.png","crying_cat_face":"1f63f.png","cupid":"1f498.png","dash":"1f4a8.png","disappointed":"1f61e.png","disappointed_relieved":"1f625.png","dizzy":"1f4ab.png","dizzy_face":"1f635.png","drooling_face":"1f924.png","exploding_head":"1f92f.png","expressionless":"1f611.png","face_vomiting":"1f92e.png","face_with_cowboy_hat":"1f920.png","face_with_hand_over_mouth":"1f92d.png","face_with_head_bandage":"1f915.png","face_with_monocle":"1f9d0.png","face_with_raised_eyebrow":"1f928.png","face_with_rolling_eyes":"1f644.png","face_with_symbols_on_mouth":"1f92c.png","face_with_thermometer":"1f912.png","fearful":"1f628.png","flushed":"1f633.png","frowning":"1f626.png","ghost":"1f47b.png","gift_heart":"1f49d.png","green_heart":"1f49a.png","grimacing":"1f62c.png","grin":"1f601.png","grinning":"1f600.png","hankey":"1f4a9.png","hear_no_evil":"1f649.png","heart":"2764-fe0f.png","heart_decoration":"1f49f.png","heart_eyes":"1f60d.png","heart_eyes_cat":"1f63b.png","heartbeat":"1f493.png","heartpulse":"1f497.png","heavy_heart_exclamation_mark_ornament":"2763-fe0f.png","hole":"1f573-fe0f.png","hot_face":"1f975.png","hugging_face":"1f917.png","hushed":"1f62f.png","imp":"1f47f.png","innocent":"1f607.png","japanese_goblin":"1f47a.png","japanese_ogre":"1f479.png","joy":"1f602.png","joy_cat":"1f639.png","kiss":"1f48b.png","kissing":"1f617.png","kissing_cat":"1f63d.png","kissing_closed_eyes":"1f61a.png","kissing_heart":"1f618.png","kissing_smiling_eyes":"1f619.png","laughing":"1f606.png","left_speech_bubble":"1f5e8-fe0f.png","love_letter":"1f48c.png","lying_face":"1f925.png","mask":"1f637.png","money_mouth_face":"1f911.png","nauseated_face":"1f922.png","nerd_face":"1f913.png","neutral_face":"1f610.png","no_mouth":"1f636.png","open_mouth":"1f62e.png","orange_heart":"1f9e1.png","partying_face":"1f973.png","pensive":"1f614.png","persevere":"1f623.png","pleading_face":"1f97a.png","pouting_cat":"1f63e.png","purple_heart":"1f49c.png","rage":"1f621.png","relaxed":"263a-fe0f.png","relieved":"1f60c.png","revolving_hearts":"1f49e.png","right_anger_bubble":"1f5ef-fe0f.png","robot_face":"1f916.png","rolling_on_the_floor_laughing":"1f923.png","scream":"1f631.png","scream_cat":"1f640.png","see_no_evil":"1f648.png","shushing_face":"1f92b.png","skull":"1f480.png","skull_and_crossbones":"2620-fe0f.png","sleeping":"1f634.png","sleepy":"1f62a.png","slightly_frowning_face":"1f641.png","slightly_smiling_face":"1f642.png","smile":"1f604.png","smile_cat":"1f638.png","smiley":"1f603.png","smiley_cat":"1f63a.png","smiling_face_with_3_hearts":"1f970.png","smiling_imp":"1f608.png","smirk":"1f60f.png","smirk_cat":"1f63c.png","sneezing_face":"1f927.png","sob":"1f62d.png","space_invader":"1f47e.png","sparkling_heart":"1f496.png","speak_no_evil":"1f64a.png","speech_balloon":"1f4ac.png","star-struck":"1f929.png","stuck_out_tongue":"1f61b.png","stuck_out_tongue_closed_eyes":"1f61d.png","stuck_out_tongue_winking_eye":"1f61c.png","sunglasses":"1f60e.png","sweat":"1f613.png","sweat_drops":"1f4a6.png","sweat_smile":"1f605.png","thinking_face":"1f914.png","thought_balloon":"1f4ad.png","tired_face":"1f62b.png","triumph":"1f624.png","two_hearts":"1f495.png","unamused":"1f612.png","upside_down_face":"1f643.png","weary":"1f629.png","white_frowning_face":"2639-fe0f.png","white_heart":"1f90d.png","wink":"1f609.png","woozy_face":"1f974.png","worried":"1f61f.png","yawning_face":"1f971.png","yellow_heart":"1f49b.png","yum":"1f60b.png","zany_face":"1f92a.png","zipper_mouth_face":"1f910.png","zzz":"1f4a4.png"},"enableQQ":false,"highlight":true,"lang":"zh-cn","pageSize":10,"placeholder":"你的评论 ...","recordIP":true,"serverURLs":"https://leancloud.hugoloveit.com","visitor":true}},"lightGallery":{"actualSize":false,"exThumbImage":"data-thumbnail","hideBarsDelay":2000,"selector":".lightgallery","speed":400,"thumbContHeight":80,"thumbWidth":80,"thumbnail":true},"search":{"algoliaAppID":"4G4N2WV1XL","algoliaIndex":"index.zh-cn","algoliaSearchKey":"199dbfba1469d7cc46c636a26f72a8c7","highlightTag":"em","maxResultLength":10,"noResultsFound":"没有找到结果","snippetLength":50,"type":"algolia"}};</script><script type="text/javascript" src="/js/theme.min.js"></script></body>
+</html>

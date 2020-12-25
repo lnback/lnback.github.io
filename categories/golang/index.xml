@@ -1,0 +1,21 @@
+<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
+    <channel>
+        <title>Golang - 分类 - lnback&#39; s blog</title>
+        <link>https://example.com/categories/golang/</link>
+        <description>Golang - 分类 - lnback&#39; s blog</description>
+        <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright><lastBuildDate>Fri, 18 Dec 2020 18:16:30 &#43;0800</lastBuildDate><atom:link href="https://example.com/categories/golang/" rel="self" type="application/rss+xml" /><item>
+    <title>Go语言的CSP模型</title>
+    <link>https://example.com/go%E8%AF%AD%E8%A8%80%E7%9A%84csp%E6%A8%A1%E5%9E%8B/</link>
+    <pubDate>Fri, 18 Dec 2020 18:16:30 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://example.com/go%E8%AF%AD%E8%A8%80%E7%9A%84csp%E6%A8%A1%E5%9E%8B/</guid>
+    <description><![CDATA[go语言的两个亮点：一个是goroutine，一个就是channel。二者合体的典型应用CSP，就是大家认可的并行开发神器。 1.1 什么是CSP？]]></description>
+</item><item>
+    <title>Go语言的并发</title>
+    <link>https://example.com/goroutine/</link>
+    <pubDate>Thu, 10 Dec 2020 16:16:30 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://example.com/goroutine/</guid>
+    <description><![CDATA[Go并发调度：G-P-M 模型 1. GPM模型 G：Goroutine的简称，上面用go关键字家函数调用的代码就是创建了一个G对象。 M：Machin]]></description>
+</item></channel>
+</rss>

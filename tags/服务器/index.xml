@@ -1,0 +1,14 @@
+<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
+    <channel>
+        <title>服务器 - 标签 - lnback&#39; s blog</title>
+        <link>https://example.com/tags/%E6%9C%8D%E5%8A%A1%E5%99%A8/</link>
+        <description>服务器 - 标签 - lnback&#39; s blog</description>
+        <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright><lastBuildDate>Wed, 16 Dec 2020 16:06:30 &#43;0800</lastBuildDate><atom:link href="https://example.com/tags/%E6%9C%8D%E5%8A%A1%E5%99%A8/" rel="self" type="application/rss+xml" /><item>
+    <title>Nginx介绍</title>
+    <link>https://example.com/nginx/</link>
+    <pubDate>Wed, 16 Dec 2020 16:06:30 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://example.com/nginx/</guid>
+    <description><![CDATA[1.1 简单介绍一下Nginx？ Nginx是一款轻量级的Web服务器/反向代理服务器及电子邮件（IMAP/POP3）代理服务器。Nginx主要提供]]></description>
+</item></channel>
+</rss>

@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="robots" content="noodp" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1">
+        <title>《Redis设计与实现》（二）对象 - lnback&#39; s blog</title><meta name="Description" content="LLY 的个人博客"><meta property="og:title" content="《Redis设计与实现》（二）对象" />
+<meta property="og:description" content="对象 引言 前一章介绍了Redis的主要数据结构，但Redis并没有直接使用这些数据结构来实现键值对数据库， 而是基于这些数据结构创建了一个对象系" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://example.com/2.%E5%AF%B9%E8%B1%A1/" />
+<meta property="og:image" content="https://example.com/logo.png"/>
+<meta property="article:published_time" content="2020-12-04T17:55:30+08:00" />
+<meta property="article:modified_time" content="2020-12-04T17:55:30+08:00" />
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://example.com/logo.png"/>
+
+<meta name="twitter:title" content="《Redis设计与实现》（二）对象"/>
+<meta name="twitter:description" content="对象 引言 前一章介绍了Redis的主要数据结构，但Redis并没有直接使用这些数据结构来实现键值对数据库， 而是基于这些数据结构创建了一个对象系"/>
+<meta name="application-name" content="lnback">
+<meta name="apple-mobile-web-app-title" content="lnback"><meta name="theme-color" content="#ffffff"><meta name="msapplication-TileColor" content="#da532c"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="https://example.com/2.%E5%AF%B9%E8%B1%A1/" /><link rel="prev" href="https://example.com/protobuf/" /><link rel="next" href="https://example.com/1.%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/" /><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/normalize.css@8.0.1/normalize.min.css"><link rel="stylesheet" href="/css/style.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.13.0/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.7.2/animate.min.css"><script type="application/ld+json">
+    {
+        "@context": "http://schema.org",
+        "@type": "BlogPosting",
+        "headline": "《Redis设计与实现》（二）对象",
+        "inLanguage": "zh-CN",
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "https:\/\/example.com\/2.%E5%AF%B9%E8%B1%A1\/"
+        },"genre": "posts","keywords": "Redis, 阅读","wordcount":  4308 ,
+        "url": "https:\/\/example.com\/2.%E5%AF%B9%E8%B1%A1\/","datePublished": "2020-12-04T17:55:30+08:00","dateModified": "2020-12-04T17:55:30+08:00","license": "This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.","publisher": {
+            "@type": "Organization",
+            "name": "xxxx","logo": "https:\/\/example.com\/images\/avatar.png"},"author": {
+                "@type": "Person",
+                "name": "lnback"
+            },"description": ""
+    }
+    </script></head>
+    <body header-desktop="fixed" header-mobile="auto"><script type="text/javascript">(window.localStorage && localStorage.getItem('theme') ? localStorage.getItem('theme') === 'dark' : ('auto' === 'auto' ? window.matchMedia('(prefers-color-scheme: dark)').matches : 'auto' === 'dark')) && document.body.setAttribute('theme', 'dark');</script>
+
+        <div id="mask"></div><div class="wrapper"><header class="desktop" id="header-desktop">
+    <div class="header-wrapper">
+        <div class="header-title">
+            <a href="/" title="lnback&#39; s blog">lnback</a>
+        </div>
+        <div class="menu">
+            <div class="menu-inner"><a class="menu-item" href="/posts/"> 所有文章 </a><a class="menu-item" href="/tags/"> 标签 </a><a class="menu-item" href="/categories/"> 分类 </a><a class="menu-item" href="/about/about"> 关于 </a><a class="menu-item" href="https://github.com/lnback" title="GitHub" rel="noopener noreffer" target="_blank"><i class='fab fa-github fa-fw'></i>  </a><span class="menu-item delimiter"></span><span class="menu-item search" id="search-desktop">
+                        <input type="text" placeholder="搜索文章标题或内容..." id="search-input-desktop">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-desktop" title="搜索">
+                            <i class="fas fa-search fa-fw"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-desktop" title="清空">
+                            <i class="fas fa-times-circle fa-fw"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-desktop">
+                            <i class="fas fa-spinner fa-fw fa-spin"></i>
+                        </span>
+                    </span><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
+                    <i class="fas fa-adjust fa-fw"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</header><header class="mobile" id="header-mobile">
+    <div class="header-container">
+        <div class="header-wrapper">
+            <div class="header-title">
+                <a href="/" title="lnback&#39; s blog">lnback</a>
+            </div>
+            <div class="menu-toggle" id="menu-toggle-mobile">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+        <div class="menu" id="menu-mobile"><div class="search-wrapper">
+                    <div class="search mobile" id="search-mobile">
+                        <input type="text" placeholder="搜索文章标题或内容..." id="search-input-mobile">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-mobile" title="搜索">
+                            <i class="fas fa-search fa-fw"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-mobile" title="清空">
+                            <i class="fas fa-times-circle fa-fw"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-mobile">
+                            <i class="fas fa-spinner fa-fw fa-spin"></i>
+                        </span>
+                    </div>
+                    <a href="javascript:void(0);" class="search-cancel" id="search-cancel-mobile">
+                        取消
+                    </a>
+                </div><a class="menu-item" href="/posts/" title="">所有文章</a><a class="menu-item" href="/tags/" title="">标签</a><a class="menu-item" href="/categories/" title="">分类</a><a class="menu-item" href="/about/about" title="">关于</a><a class="menu-item" href="https://github.com/lnback" title="GitHub" rel="noopener noreffer" target="_blank"><i class='fab fa-github fa-fw'></i></a><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
+                <i class="fas fa-adjust fa-fw"></i>
+            </a></div>
+    </div>
+</header>
+<div class="search-dropdown desktop">
+    <div id="search-dropdown-desktop"></div>
+</div>
+<div class="search-dropdown mobile">
+    <div id="search-dropdown-mobile"></div>
+</div>
+<main class="main">
+                <div class="container"><div class="toc" id="toc-auto">
+            <h2 class="toc-title">目录</h2>
+            <div class="toc-content" id="toc-content-auto"></div>
+        </div><article class="page single"><h1 class="single-title animated flipInX">《Redis设计与实现》（二）对象</h1><div class="post-meta">
+            <div class="post-meta-line"><span class="post-author"><a href="/" title="Author" rel=" author" class="author"><i class="fas fa-user-circle fa-fw"></i>lnback</a></span>&nbsp;<span class="post-category">收录于 <a href="/categories/redis/"><i class="far fa-folder fa-fw"></i>redis</a></span></div>
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2020-12-04">2020-12-04</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 4308 字&nbsp;
+                <i class="far fa-clock fa-fw"></i>&nbsp;预计阅读 9 分钟&nbsp;<span id="/2.%E5%AF%B9%E8%B1%A1/" class="leancloud_visitors" data-flag-title="《Redis设计与实现》（二）对象">
+                        <i class="far fa-eye fa-fw"></i>&nbsp;<span class=leancloud-visitors-count></span>&nbsp;次阅读
+                    </span>&nbsp;</div>
+        </div><div class="details toc" id="toc-static"  kept="">
+                <div class="details-summary toc-title">
+                    <span>目录</span>
+                    <span><i class="details-icon fas fa-angle-right"></i></span>
+                </div>
+                <div class="details-content toc-content" id="toc-content-static"><nav id="TableOfContents">
+  <ul>
+    <li><a href="#引言">引言</a></li>
+    <li><a href="#一对象的类型和编码">一、对象的类型和编码</a>
+      <ul>
+        <li><a href="#11-对象的类型">1.1 对象的类型</a></li>
+        <li><a href="#12-对象的编码">1.2 对象的编码</a></li>
+      </ul>
+    </li>
+    <li><a href="#二字符串对象">二、字符串对象</a>
+      <ul>
+        <li><a href="#21-编码方式">2.1 编码方式</a></li>
+        <li><a href="#22-编码转换">2.2 编码转换</a></li>
+      </ul>
+    </li>
+    <li><a href="#三列表对象">三、列表对象</a>
+      <ul>
+        <li><a href="#31-编码方式">3.1 编码方式</a></li>
+        <li><a href="#32-编码转换">3.2 编码转换</a></li>
+      </ul>
+    </li>
+    <li><a href="#四哈希对象">四、哈希对象</a>
+      <ul>
+        <li><a href="#41-编码方式">4.1 编码方式</a></li>
+        <li><a href="#42-编码转换">4.2 编码转换</a></li>
+      </ul>
+    </li>
+    <li><a href="#五集合对象">五、集合对象</a>
+      <ul>
+        <li><a href="#51-编码方式">5.1 编码方式</a></li>
+        <li><a href="#52-编码转换">5.2 编码转换</a></li>
+      </ul>
+    </li>
+    <li><a href="#六有序集合对象">六、有序集合对象</a>
+      <ul>
+        <li><a href="#61-编码方式">6.1 编码方式</a></li>
+        <li><a href="#62-编码转换">6.2 编码转换</a></li>
+      </ul>
+    </li>
+    <li><a href="#七内存回收对象共享空转时长">七、内存回收、对象共享、空转时长</a></li>
+  </ul>
+</nav></div>
+            </div><div class="content" id="content"><h1 id="对象">对象</h1>
+<h2 id="引言">引言</h2>
+<p>前一章介绍了Redis的主要数据结构，但Redis并没有直接使用这些数据结构来实现键值对数据库， 而是基于这些数据结构创建了一个对象系统 ，这个系统包含<strong>字符串对象、列表对象、哈希对象、集合对象和有序集合对象</strong>这五种类型的对象。</p>
+<p>使用对象有两个好处：</p>
+<ul>
+<li>执行命令前，根据对象类型来判断是否可以执行此命令。</li>
+<li>针对不同使用场景，为对象设置多种不同的数据结构实现，达到优化的目的。</li>
+</ul>
+<p>此外，对象系统还引入了<strong>引用计数实现内存回收机制，以及对象共享。</strong></p>
+<h2 id="一对象的类型和编码">一、对象的类型和编码</h2>
+<p>Redis中的每一个键值对的键和值都是一个对象，每个对象都由一个<code>redisObject</code>结构表示，该结构中和保存数据有关的三个属性分别是<code>type</code>属性、<code>encoding</code>属性和<code>ptr</code>属性。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span><span class="lnt">9
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="k">typedef</span> <span class="k">struct</span> <span class="n">redisObject</span><span class="p">{</span>
+    <span class="c1">// 类型
+</span><span class="c1"></span>    <span class="kt">unsigned</span> <span class="nl">typed</span> <span class="p">:</span> <span class="mi">4</span><span class="p">;</span>
+    <span class="c1">// 编码
+</span><span class="c1"></span>    <span class="kt">unsigned</span> <span class="nl">encoding</span> <span class="p">:</span><span class="mi">4</span><span class="p">;</span>
+    <span class="c1">//指向底层实现数据结构的指针
+</span><span class="c1"></span>    <span class="kt">void</span> <span class="o">*</span> <span class="n">ptr</span><span class="p">;</span>
+
+<span class="p">}</span><span class="n">obj</span><span class="p">;</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>结构体的冒号表示位域，表示该变量占用的二进制位数。</p>
+<h3 id="11-对象的类型">1.1 对象的类型</h3>
+<p>对象的<code>type</code>属性记录了对象的类型，属性的值如下表所示：</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">类型常量</th>
+<th style="text-align:center">对象的名称</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">REDIS_STRING</td>
+<td style="text-align:center">字符串对象</td>
+</tr>
+<tr>
+<td style="text-align:center">REDIS_LIST</td>
+<td style="text-align:center">列表对象</td>
+</tr>
+<tr>
+<td style="text-align:center">REDIS_HASH</td>
+<td style="text-align:center">哈希对象</td>
+</tr>
+<tr>
+<td style="text-align:center">REDIS_SET</td>
+<td style="text-align:center">集合对象</td>
+</tr>
+<tr>
+<td style="text-align:center">REDIS_ZSET</td>
+<td style="text-align:center">有序集合对象</td>
+</tr>
+<tr>
+<td style="text-align:center">对于Redis数据库保存的键值对来说，键总是一个字符串对象，而值可以是上表中的其中一个</td>
+<td></td>
+</tr>
+<tr>
+<td style="text-align:center">所以，当我们称呼一个数据库键位“字符串键”时，我们指的是“这个<strong>数据库键</strong>所<strong>对应的值为字符串对象</strong>”；同理，当我们称呼一个键位“列表键” 时，我们指的是“这个 <strong>数据库键</strong> 所 <strong>对应的值为列表对象</strong>”</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h3 id="12-对象的编码">1.2 对象的编码</h3>
+<p>对象的<code>ptr</code>指针指向对象的底层实现数据结构，而这些数据结构由对象的<code>encoding</code>属性决定。<code>encoding</code>属性如下表所示：</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">编码常量</th>
+<th style="text-align:center">编码所对应的底层数据结构</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">REDIS_ENCODING_INT</td>
+<td style="text-align:center"><code>long</code>类型的整数</td>
+</tr>
+<tr>
+<td style="text-align:center">REDIS_ENCODING_EMBSTR</td>
+<td style="text-align:center"><code>embstr</code>编码的简单动态字符串</td>
+</tr>
+<tr>
+<td style="text-align:center">REDIS_ENCODING_RAW</td>
+<td style="text-align:center">简单动态字符串</td>
+</tr>
+<tr>
+<td style="text-align:center">REDIS_ENCODING_HT</td>
+<td style="text-align:center">字典</td>
+</tr>
+<tr>
+<td style="text-align:center">REDIS_ENCODING_LINKEDLIST</td>
+<td style="text-align:center">双端链表</td>
+</tr>
+<tr>
+<td style="text-align:center">REDIS_ENCODING_ZIPLIST</td>
+<td style="text-align:center">压缩列表</td>
+</tr>
+<tr>
+<td style="text-align:center">REDIS_ENCODING_INTSET</td>
+<td style="text-align:center">整数集合</td>
+</tr>
+<tr>
+<td style="text-align:center">REDIS_ENCODING_ZSKIPLIST</td>
+<td style="text-align:center">跳跃表和字典</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="二字符串对象">二、字符串对象</h2>
+<h3 id="21-编码方式">2.1 编码方式</h3>
+<p>字符串对象的编码可以是<code>int</code>、<code>raw</code>或者<code>embstr</code>。</p>
+<ul>
+<li>
+<p>如果一个字符串对象保存的是整数值，并且这个整数值可以用<code>long</code>类型来表示，那么字符串对象会将整数值保存在字符串对象结构的<code>ptr</code>属性里面(将<code>void*</code>转换为<code>long</code>)，并将字符串对象的编码设置为<code>int</code>。
+<img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="..%5cmd%e5%9b%be%e7%89%87%5c71.png"
+        data-srcset="..%5cmd%e5%9b%be%e7%89%87%5c71.png, ..%5cmd%e5%9b%be%e7%89%87%5c71.png 1.5x, ..%5cmd%e5%9b%be%e7%89%87%5c71.png 2x"
+        data-sizes="auto"
+        alt="..\md图片\71.png"
+        title="..\md图片\71.png" /></p>
+</li>
+<li>
+<p>如果字符串对象保存的是一个字符串值，并且这个字符串值的长度大于39字节，那么字符串对象将使用一个<strong>简单动态字符串(SDS)</strong> 来保存这个字符串，并将对象的编码设置为<code>raw</code>
+<img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="..%5cmd%e5%9b%be%e7%89%87%5c72.png"
+        data-srcset="..%5cmd%e5%9b%be%e7%89%87%5c72.png, ..%5cmd%e5%9b%be%e7%89%87%5c72.png 1.5x, ..%5cmd%e5%9b%be%e7%89%87%5c72.png 2x"
+        data-sizes="auto"
+        alt="..\md图片\72.png"
+        title="..\md图片\72.png" /></p>
+</li>
+<li>
+<p>如果字符串对象保存的是一个字符串值，并且这个字符串值的长度小于等于39字节，那么字符串对象将使用<code>embstr</code>编码的方式来保存这个字符串。
+<code>embstr</code>编码是一种专门用于保存端字符串的一种优化编码方式。这种编码和<code>raw</code>编码一样，都使用<code>redisObject</code>结构和<code>sdshdr</code>结构来表示字符串对象，区别在于：</p>
+<ul>
+<li><code>raw</code>编码会调用两次内存来分配<code>redisObject</code>结构和<code>sdshdr</code>结构。</li>
+<li><code>embstr</code>编码只调用一次内存来分配一块连续的空间。
+<img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="..%5cmd%e5%9b%be%e7%89%87%5c73.png"
+        data-srcset="..%5cmd%e5%9b%be%e7%89%87%5c73.png, ..%5cmd%e5%9b%be%e7%89%87%5c73.png 1.5x, ..%5cmd%e5%9b%be%e7%89%87%5c73.png 2x"
+        data-sizes="auto"
+        alt="..\md图片\73.png"
+        title="..\md图片\73.png" /></li>
+</ul>
+<p>由于减少了内存分配的次数，以及将零散的内存整合到一起，这种编码的字符串对象比起<code>raw</code>编码能够更好地利用缓存带来的优势。</p>
+<p>如果保存浮点数，则会先转化为字符串类型保存。比如保存3.14就会先保存为&quot;3.14&quot;。但在有需要的时候，程序会将保存在字符串对象里面的字符串值转换回浮点数值，执行某些操作，然后再将执行操作所得的浮点数值转换回字符串值，并继续保存在字符串对象里面。</p>
+<p>下表是值和对应的编码类型</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">值</th>
+<th style="text-align:center">编码</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">可以用long类型保存的整数</td>
+<td style="text-align:center">int</td>
+</tr>
+<tr>
+<td style="text-align:center">可以用long double类型保存的浮点数</td>
+<td style="text-align:center">embstr或者raw</td>
+</tr>
+<tr>
+<td style="text-align:center">字符串值，长度太大没办法用long类型表示的参数</td>
+<td style="text-align:center">embstr或者raw</td>
+</tr>
+</tbody>
+</table>
+</li>
+</ul>
+<h3 id="22-编码转换">2.2 编码转换</h3>
+<p>编码之间也会有互相转换的情况。对于<code>int</code>编码的字符串对象来说，如果因为命令导致这个对象保存的不再是整数值，而是一个字符串值，那么字符串对象的编码将从<code>int</code>变为<code>raw</code>。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-bash" data-lang="bash">redis&gt; SET number <span class="m">10086</span>
+OK
+    
+redis&gt; OBJECT ENCODING number
+<span class="s2">&#34;int&#34;</span>
+    
+redis&gt; APPEND number <span class="s2">&#34; is a good number!&#34;</span>
+<span class="o">(</span>integer<span class="o">)</span> <span class="m">23</span>
+    
+redis&gt; GET number
+<span class="s2">&#34;10086 is a good number!&#34;</span>
+    
+redis&gt; OBJECT ENCODING number
+<span class="s2">&#34;raw&#34;</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>因为Redis没有为<code>embstr</code>编码的字符串对象编写任何相应的修改程序，所以<code>embstr</code>编码的字符串对象实际上是只读的。当修改<code>embstr</code>编码的字符串对象，程序会先将对象的编码从<code>embstr</code>转换成<code>raw</code>，然后再执行修改命令。</p>
+<hr>
+<h2 id="三列表对象">三、列表对象</h2>
+<h3 id="31-编码方式">3.1 编码方式</h3>
+<p>列表对象的编码可以是<code>ziplist</code>或者是<code>linkedlist</code>
+如同前面提到的，压缩列表每个节点只保存一个列表元素。下面例子中，我们输入数字1，字符&quot;three&quot;，数字5。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-bash" data-lang="bash">redis &gt; RPUSH numbers <span class="m">1</span> <span class="s2">&#34;three&#34;</span> <span class="m">5</span>
+<span class="o">(</span>integer<span class="o">)</span> <span class="m">3</span>
+</code></pre></td></tr></table>
+</div>
+</div><p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="..%5cmd%e5%9b%be%e7%89%87%5c81.png"
+        data-srcset="..%5cmd%e5%9b%be%e7%89%87%5c81.png, ..%5cmd%e5%9b%be%e7%89%87%5c81.png 1.5x, ..%5cmd%e5%9b%be%e7%89%87%5c81.png 2x"
+        data-sizes="auto"
+        alt="..\md图片\81.png"
+        title="..\md图片\81.png" /></p>
+<p>如果使用的不是<code>ziplist</code>编码，而是<code>linkedlist</code>双端链表编码，那么</p>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="..%5cmd%e5%9b%be%e7%89%87%5c82.png"
+        data-srcset="..%5cmd%e5%9b%be%e7%89%87%5c82.png, ..%5cmd%e5%9b%be%e7%89%87%5c82.png 1.5x, ..%5cmd%e5%9b%be%e7%89%87%5c82.png 2x"
+        data-sizes="auto"
+        alt="..\md图片\82.png"
+        title="..\md图片\82.png" /></p>
+<p>这其实是一个嵌套编码，Redis使用了一个<code>StringObject</code>来表示一个字符串对象，编码方式如同字符串对象的三种编码方式。如果编码对象是字符串值，展开后就是：</p>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="..%5cmd%e5%9b%be%e7%89%87%5c83.png"
+        data-srcset="..%5cmd%e5%9b%be%e7%89%87%5c83.png, ..%5cmd%e5%9b%be%e7%89%87%5c83.png 1.5x, ..%5cmd%e5%9b%be%e7%89%87%5c83.png 2x"
+        data-sizes="auto"
+        alt="..\md图片\83.png"
+        title="..\md图片\83.png" /></p>
+<h3 id="32-编码转换">3.2 编码转换</h3>
+<p>当列表对象可以同时满足以下两个条件时，列表对象使用<code>ziplist</code>编码：</p>
+<ol>
+<li>列表对象保存的所有字符串元素的长度都小于64字节；</li>
+<li>列表对象保存的元素数量小于512个；</li>
+</ol>
+<p>当上诉条件有一个不满足时，就会执行转换操作：原本保存在压缩列表里的所有列表元素都会被转移病保存到双端链表里面，对象的编码也会从<code>ziplist</code>变为<code>linkedlist</code></p>
+<hr>
+<h2 id="四哈希对象">四、哈希对象</h2>
+<h3 id="41-编码方式">4.1 编码方式</h3>
+<p>哈希对象的编码可以是<code>ziplist</code>或者<code>hashtable</code>
+<code>ziplist</code>编码时，每当有新的键值对要加入到哈希对象时，程序会将保存了键的压缩列表节点推入到压缩列表表尾，然后再将保存了值的压缩列表节点推入到压缩列表表尾，因此：</p>
+<ul>
+<li>保存了同一键值对的两个节点总是紧挨在一起，键前值后。</li>
+<li>先添加到哈希对象中的键值对会被放在压缩列表的表头方向，而后来添加到哈希对象中的键值对会被放在压缩列表的表尾方向。</li>
+</ul>
+<p>比如：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-bash" data-lang="bash">redis&gt; HSET profile name <span class="s2">&#34;Tom&#34;</span>
+<span class="o">(</span>integer<span class="o">)</span> <span class="m">1</span>
+
+redis&gt; HSET profile age <span class="m">25</span>
+<span class="o">(</span>integer<span class="o">)</span> <span class="m">1</span>
+
+redis&gt; HSET profile career <span class="s2">&#34;Programmer&#34;</span>
+<span class="o">(</span>integer<span class="o">)</span> <span class="m">1</span>
+</code></pre></td></tr></table>
+</div>
+</div><p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="..%5cmd%e5%9b%be%e7%89%87%5c91.png"
+        data-srcset="..%5cmd%e5%9b%be%e7%89%87%5c91.png, ..%5cmd%e5%9b%be%e7%89%87%5c91.png 1.5x, ..%5cmd%e5%9b%be%e7%89%87%5c91.png 2x"
+        data-sizes="auto"
+        alt="..\md图片\91.png"
+        title="..\md图片\91.png" /></p>
+<p><code>hashtable</code>编码时，哈希对象中的每个键值对都使用一个字典键值对来保存：</p>
+<ul>
+<li>字典的每个键都是一个字符串对象，对象中保存了键值对的键</li>
+<li>字典的每个值都是一个字符串对象，对象中保存了键值对的值</li>
+</ul>
+<p>比如，上面的例子改为<code>hashtable</code>编码
+<img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="..%5cmd%e5%9b%be%e7%89%87%5c92.png"
+        data-srcset="..%5cmd%e5%9b%be%e7%89%87%5c92.png, ..%5cmd%e5%9b%be%e7%89%87%5c92.png 1.5x, ..%5cmd%e5%9b%be%e7%89%87%5c92.png 2x"
+        data-sizes="auto"
+        alt="..\md图片\92.png"
+        title="..\md图片\92.png" /></p>
+<h3 id="42-编码转换">4.2 编码转换</h3>
+<p>当哈希对象可以同时满足以下两个条件时，哈希对象使用<code>ziplist</code>编码：</p>
+<ol>
+<li>哈希对象保存的所有键值对的键和值的字符串长度都小于64字节</li>
+<li>哈希对象保存的键值对数量小于512个</li>
+</ol>
+<p>类似于列表对象，不满足条件时，原本保存在压缩列表中的所有键值对都会被转移并保存到字典里面，对象的编码也会从<code>ziplist</code>变为<code>hashtable</code></p>
+<hr>
+<h2 id="五集合对象">五、集合对象</h2>
+<h3 id="51-编码方式">5.1 编码方式</h3>
+<p>集合对象的编码可以是<code>intset</code>或者<code>hashtable</code>
+<code>intset</code>编码时，元素将被密集得堆叠在位上，比如</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="n">redis</span> <span class="o">&gt;</span> <span class="n">SADD</span> <span class="n">numbers</span> <span class="mi">1</span> <span class="mi">3</span> <span class="mi">5</span>
+<span class="p">(</span><span class="n">integer</span><span class="p">)</span> <span class="mi">3</span>
+</code></pre></td></tr></table>
+</div>
+</div><p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="..%5cmd%e5%9b%be%e7%89%87%5c101.png"
+        data-srcset="..%5cmd%e5%9b%be%e7%89%87%5c101.png, ..%5cmd%e5%9b%be%e7%89%87%5c101.png 1.5x, ..%5cmd%e5%9b%be%e7%89%87%5c101.png 2x"
+        data-sizes="auto"
+        alt="..\md图片\101.png"
+        title="..\md图片\101.png" /></p>
+<p>另一方面，<code>hashtable</code>编码的集合对象使用字典作为底层实现，字典的每个键都是一个字符串对象，每个字符串对象包含了一个集合元素，而<strong>字典的值则全部设置为<code>NULL</code></strong></p>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="..%5cmd%e5%9b%be%e7%89%87%5c102.png"
+        data-srcset="..%5cmd%e5%9b%be%e7%89%87%5c102.png, ..%5cmd%e5%9b%be%e7%89%87%5c102.png 1.5x, ..%5cmd%e5%9b%be%e7%89%87%5c102.png 2x"
+        data-sizes="auto"
+        alt="..\md图片\102.png"
+        title="..\md图片\102.png" /></p>
+<h3 id="52-编码转换">5.2 编码转换</h3>
+<p>当集合对象可以同时满足以下两个条件时，对象使用<code>intset</code>编码：</p>
+<ol>
+<li>集合对象保存的所有元素都是整数值</li>
+<li>集合对象保存的元素数量不超过512个</li>
+</ol>
+<p>当使用 intset 编码所需的两个条件的任意一个不能被满足时， 对象的编码转换操作就会被执行： 原本保存在整数集合中的所有元素都会被转移并保存到字典里面， 并且对象的编码也会从 intset 变为 hashtable 。</p>
+<hr>
+<h2 id="六有序集合对象">六、有序集合对象</h2>
+<h3 id="61-编码方式">6.1 编码方式</h3>
+<p>有序集合的编码可以是<code>ziplist</code>或者<code>skiplist</code>。
+<code>ziplist</code>编码的有序集合对象使用压缩列表作为底层实现，每个集合元素使用两个紧挨在一起的压缩列表节点来保存，第一个节点保存元素的成员(member)，第二个元素来保存元素的分值(score)。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="n">redis</span><span class="o">&gt;</span> <span class="n">ZADD</span> <span class="n">price</span> <span class="mf">8.5</span> <span class="n">apple</span> <span class="mf">5.0</span> <span class="n">banana</span> <span class="mf">6.0</span> <span class="n">cherry</span>
+<span class="p">(</span><span class="n">integer</span><span class="p">)</span> <span class="mi">3</span>
+</code></pre></td></tr></table>
+</div>
+</div><p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="..%5cmd%e5%9b%be%e7%89%87%5c111.png"
+        data-srcset="..%5cmd%e5%9b%be%e7%89%87%5c111.png, ..%5cmd%e5%9b%be%e7%89%87%5c111.png 1.5x, ..%5cmd%e5%9b%be%e7%89%87%5c111.png 2x"
+        data-sizes="auto"
+        alt="..\md图片\111.png"
+        title="..\md图片\111.png" /></p>
+<p><code>skiplist</code>编码的有序集合对象使用<code>zset</code>结构作为底层实现，一个zset结构同事包含一个字典和一个跳跃表：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="k">typedef</span> <span class="k">struct</span> <span class="n">zset</span><span class="p">{</span>
+    <span class="n">zskiplist</span> <span class="o">*</span> <span class="n">zsl</span><span class="p">;</span>
+    <span class="n">dict</span> <span class="o">*</span> <span class="n">dict</span><span class="p">;</span>
+<span class="p">}</span><span class="n">zset</span><span class="p">;</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>起作用主要是跳跃表，字典是辅助加速用。字典的键记录了元素的成员，而值保存了元素的分值。通过字典可以实现$O(1)$的查询时间复杂度。</p>
+<p>有序集合每个元素的成员都是一个字符串对象， 而每个元素的分值都是一个<code>double</code> 类型的浮点数。</p>
+<p>虽然 <code>zset</code> 结构同时使用跳跃表和字典来保存有序集合元素， 但这两种数据结构都会通过指针来共享相同元素的成员和分值， 所以同时使用跳跃表和字典来保存集合元素不会产生任何重复成员或者分值， 也不会因此而浪费额外的内存。</p>
+<h3 id="62-编码转换">6.2 编码转换</h3>
+<p>当有序集合对象可以同时满足以下两个条件时， 对象使用 <code>ziplist</code> 编码：</p>
+<ol>
+<li>有序集合保存的元素数量小于 128 个；</li>
+<li>有序集合保存的所有元素成员的长度都小于 64 字节；</li>
+</ol>
+<p>不能满足以上两个条件的有序集合对象将使用 <code>skiplist</code> 编码。</p>
+<h2 id="七内存回收对象共享空转时长">七、内存回收、对象共享、空转时长</h2>
+<p>对象中包括了一个引用计数器：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="k">typedef</span> <span class="k">struct</span> <span class="n">redisObject</span><span class="p">{</span>
+    <span class="c1">//引用计数
+</span><span class="c1"></span>
+    <span class="kt">int</span> <span class="n">refcount</span><span class="p">;</span>
+<span class="p">}</span><span class="n">robj</span><span class="p">;</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>对象的引用计数信息会随着对象的使用状态而不断变化：</p>
+<ul>
+<li>在创建一个新对象时， 引用计数的值会被初始化为 1 ；</li>
+<li>当对象被引用时，计数值+1；</li>
+<li>当对象不再被引用时，计数值-1；</li>
+<li>当对象的引用计数值变为 0 时， 对象所占用的内存会被释放。</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">函数</th>
+<th style="text-align:center">作用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">incrRefCount</td>
+<td style="text-align:center">将对象的引用计数增一</td>
+</tr>
+<tr>
+<td style="text-align:center">decrRefCount</td>
+<td style="text-align:center">讲对象的引用计数值减一，当对象的引用计数值等于0时，释放对象。</td>
+</tr>
+<tr>
+<td style="text-align:center">resetRefCount</td>
+<td style="text-align:center">将对象的引用计数值设置为0，但并不释放对象，这个函数通常在需要重新设置对象的引用计数值时使用</td>
+</tr>
+<tr>
+<td style="text-align:center">通过引用机制，还能实现对象共享。<strong>共享只针对整数值对象，不针对包含字符串的对象。</strong></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>假设键A创建了一个包含整数值100的字符串对象作为值对象
+<img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="..%5cmd%e5%9b%be%e7%89%87%5c121.png"
+        data-srcset="..%5cmd%e5%9b%be%e7%89%87%5c121.png, ..%5cmd%e5%9b%be%e7%89%87%5c121.png 1.5x, ..%5cmd%e5%9b%be%e7%89%87%5c121.png 2x"
+        data-sizes="auto"
+        alt="..\md图片\121.png"
+        title="..\md图片\121.png" /></p>
+<p>如果这时键B也要创建一个同样保存了整数值100的字符串对象作为值对象，那么服务器有两种做法：</p>
+<ol>
+<li>为键B新创建一个包含整数值100的字符串对象</li>
+<li>让键A和键B共享一个字符串对象</li>
+</ol>
+<p>以上两种方法很明显是第二种方法更节约内存。在Redis中，让多个键共享同一个值对象需要执行以下两个步骤，</p>
+<ol>
+<li>将数据库键的值指针指向一个现有的值对象；</li>
+<li>将被共享的值对象的引用计数增一；</li>
+</ol>
+<p>Redis会在初始化服务器的时候，创建一万个字符串对象，这些对象包含了从0~9999的所有整数值，当服务器需要用到值为0~9999的字符串对象时，服务器就会使用这些共享对象，而不是新建对象。</p>
+<p><strong>为什么Redis不共享字符串的对象？</strong></p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">共享对象</th>
+<th style="text-align:center">复杂度</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">保存整数值字符串对象</td>
+<td style="text-align:center">$O(1)$</td>
+</tr>
+<tr>
+<td style="text-align:center">保存字符串值的字符串对象</td>
+<td style="text-align:center">$O(N)$</td>
+</tr>
+<tr>
+<td style="text-align:center">包含了多个值的对象（列表或哈希）</td>
+<td style="text-align:center">$O(N^2)$</td>
+</tr>
+</tbody>
+</table>
+<p><code>redisObject</code>结构包含的最后一个属性为<code>lru</code>属性，该属性记录了对象最后一次被命令程序访问的时间：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="k">typedef</span> <span class="k">struct</span> <span class="n">redisObject</span><span class="p">{</span>
+    <span class="kt">unsigned</span> <span class="nl">lru</span> <span class="p">:</span><span class="mi">22</span><span class="p">;</span>
+<span class="p">}</span><span class="n">robj</span><span class="p">;</span>
+</code></pre></td></tr></table>
+</div>
+</div><p><code>OBJECT IDLETIME</code> 命令可以打印出给定键的空转时长， 这一空转时长就是通过将当前时间减去键的值对象的 <code>lru</code> 时间计算得出的：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-bash" data-lang="bash">redis&gt; SET msg <span class="s2">&#34;hello world&#34;</span>
+OK
+
+<span class="c1"># 等待一小段时间</span>
+redis&gt; OBJECT IDLETIME msg
+<span class="o">(</span>integer<span class="o">)</span> <span class="m">20</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>注意<code>OBJECT IDLETIME</code>命令的实现是特殊的，这个命令在访问键的值对象时，不会修改值对象的<code>lru</code>属性。
+当内存满时，空转时长较长的键会被优先释放。</p>
+</div><div class="post-footer" id="post-footer">
+    <div class="post-info">
+        <div class="post-info-line">
+            <div class="post-info-mod">
+                <span>更新于 2020-12-04</span>
+            </div>
+            <div class="post-info-license"></div>
+        </div>
+        <div class="post-info-line">
+            <div class="post-info-md"><span>
+                            <a class="link-to-markdown" href="/2.%E5%AF%B9%E8%B1%A1/index.md" target="_blank">阅读原始文档</a>
+                        </span></div>
+            <div class="post-info-share">
+                <span></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="post-info-more">
+        <section class="post-tags"><i class="fas fa-tags fa-fw"></i>&nbsp;<a href="/tags/redis/">Redis</a>,&nbsp;<a href="/tags/%E9%98%85%E8%AF%BB/">阅读</a></section>
+        <section>
+            <span><a href="javascript:void(0);" onclick="window.history.back();">返回</a></span>&nbsp;|&nbsp;<span><a href="/">主页</a></span>
+        </section>
+    </div>
+
+    <div class="post-nav"><a href="/protobuf/" class="prev" rel="prev" title="Protobuf介绍"><i class="fas fa-angle-left fa-fw"></i>Protobuf介绍</a>
+            <a href="/1.%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/" class="next" rel="next" title="《Redis设计与实现》（一）数据结构">《Redis设计与实现》（一）数据结构<i class="fas fa-angle-right fa-fw"></i></a></div>
+</div>
+<div id="comments"><div id="valine" class="comment"></div><noscript>
+                Please enable JavaScript to view the comments powered by <a href="https://valine.js.org/">Valine</a>.
+            </noscript></div></article></div>
+            </main><footer class="footer">
+        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.79.1">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
+                </div><div class="footer-line"><i class="far fa-copyright fa-fw"></i><span itemprop="copyrightYear">2020</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="/" target="_blank">lnback</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
+        </div>
+    </footer></div>
+
+        <div id="fixed-buttons"><a href="#" id="back-to-top" class="fixed-button" title="回到顶部">
+                <i class="fas fa-arrow-up fa-fw"></i>
+            </a><a href="#" id="view-comments" class="fixed-button" title="查看评论">
+                <i class="fas fa-comment fa-fw"></i>
+            </a>
+        </div><link rel="stylesheet" href="/lib/valine/valine.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery.js@1.2.0/dist/css/lightgallery.min.css"><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/valine@1.4.14/dist/Valine.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/smooth-scroll@16.1.3/dist/smooth-scroll.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/autocomplete.js@0.37.1/dist/autocomplete.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/algoliasearch@4.2.0/dist/algoliasearch-lite.umd.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lazysizes@5.2.2/lazysizes.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lightgallery.js@1.2.0/dist/js/lightgallery.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lg-thumbnail.js@1.2.0/dist/lg-thumbnail.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lg-zoom.js@1.2.0/dist/lg-zoom.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/clipboard@2.0.6/dist/clipboard.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/sharer.js@0.4.0/sharer.min.js"></script><script type="text/javascript">window.config={"code":{"copyTitle":"复制到剪贴板","maxShownLines":10},"comment":{"valine":{"appId":"QGzwQXOqs5JOhN4RGPOkR2mR-MdYXbMMI","appKey":"WBmoGyJtbqUswvfLh6L8iEBr","avatar":"mp","el":"#valine","emojiCDN":"https://cdn.jsdelivr.net/npm/emoji-datasource-google@5.0.1/img/google/64/","emojiMaps":{"100":"1f4af.png","alien":"1f47d.png","anger":"1f4a2.png","angry":"1f620.png","anguished":"1f627.png","astonished":"1f632.png","black_heart":"1f5a4.png","blue_heart":"1f499.png","blush":"1f60a.png","bomb":"1f4a3.png","boom":"1f4a5.png","broken_heart":"1f494.png","brown_heart":"1f90e.png","clown_face":"1f921.png","cold_face":"1f976.png","cold_sweat":"1f630.png","confounded":"1f616.png","confused":"1f615.png","cry":"1f622.png","crying_cat_face":"1f63f.png","cupid":"1f498.png","dash":"1f4a8.png","disappointed":"1f61e.png","disappointed_relieved":"1f625.png","dizzy":"1f4ab.png","dizzy_face":"1f635.png","drooling_face":"1f924.png","exploding_head":"1f92f.png","expressionless":"1f611.png","face_vomiting":"1f92e.png","face_with_cowboy_hat":"1f920.png","face_with_hand_over_mouth":"1f92d.png","face_with_head_bandage":"1f915.png","face_with_monocle":"1f9d0.png","face_with_raised_eyebrow":"1f928.png","face_with_rolling_eyes":"1f644.png","face_with_symbols_on_mouth":"1f92c.png","face_with_thermometer":"1f912.png","fearful":"1f628.png","flushed":"1f633.png","frowning":"1f626.png","ghost":"1f47b.png","gift_heart":"1f49d.png","green_heart":"1f49a.png","grimacing":"1f62c.png","grin":"1f601.png","grinning":"1f600.png","hankey":"1f4a9.png","hear_no_evil":"1f649.png","heart":"2764-fe0f.png","heart_decoration":"1f49f.png","heart_eyes":"1f60d.png","heart_eyes_cat":"1f63b.png","heartbeat":"1f493.png","heartpulse":"1f497.png","heavy_heart_exclamation_mark_ornament":"2763-fe0f.png","hole":"1f573-fe0f.png","hot_face":"1f975.png","hugging_face":"1f917.png","hushed":"1f62f.png","imp":"1f47f.png","innocent":"1f607.png","japanese_goblin":"1f47a.png","japanese_ogre":"1f479.png","joy":"1f602.png","joy_cat":"1f639.png","kiss":"1f48b.png","kissing":"1f617.png","kissing_cat":"1f63d.png","kissing_closed_eyes":"1f61a.png","kissing_heart":"1f618.png","kissing_smiling_eyes":"1f619.png","laughing":"1f606.png","left_speech_bubble":"1f5e8-fe0f.png","love_letter":"1f48c.png","lying_face":"1f925.png","mask":"1f637.png","money_mouth_face":"1f911.png","nauseated_face":"1f922.png","nerd_face":"1f913.png","neutral_face":"1f610.png","no_mouth":"1f636.png","open_mouth":"1f62e.png","orange_heart":"1f9e1.png","partying_face":"1f973.png","pensive":"1f614.png","persevere":"1f623.png","pleading_face":"1f97a.png","pouting_cat":"1f63e.png","purple_heart":"1f49c.png","rage":"1f621.png","relaxed":"263a-fe0f.png","relieved":"1f60c.png","revolving_hearts":"1f49e.png","right_anger_bubble":"1f5ef-fe0f.png","robot_face":"1f916.png","rolling_on_the_floor_laughing":"1f923.png","scream":"1f631.png","scream_cat":"1f640.png","see_no_evil":"1f648.png","shushing_face":"1f92b.png","skull":"1f480.png","skull_and_crossbones":"2620-fe0f.png","sleeping":"1f634.png","sleepy":"1f62a.png","slightly_frowning_face":"1f641.png","slightly_smiling_face":"1f642.png","smile":"1f604.png","smile_cat":"1f638.png","smiley":"1f603.png","smiley_cat":"1f63a.png","smiling_face_with_3_hearts":"1f970.png","smiling_imp":"1f608.png","smirk":"1f60f.png","smirk_cat":"1f63c.png","sneezing_face":"1f927.png","sob":"1f62d.png","space_invader":"1f47e.png","sparkling_heart":"1f496.png","speak_no_evil":"1f64a.png","speech_balloon":"1f4ac.png","star-struck":"1f929.png","stuck_out_tongue":"1f61b.png","stuck_out_tongue_closed_eyes":"1f61d.png","stuck_out_tongue_winking_eye":"1f61c.png","sunglasses":"1f60e.png","sweat":"1f613.png","sweat_drops":"1f4a6.png","sweat_smile":"1f605.png","thinking_face":"1f914.png","thought_balloon":"1f4ad.png","tired_face":"1f62b.png","triumph":"1f624.png","two_hearts":"1f495.png","unamused":"1f612.png","upside_down_face":"1f643.png","weary":"1f629.png","white_frowning_face":"2639-fe0f.png","white_heart":"1f90d.png","wink":"1f609.png","woozy_face":"1f974.png","worried":"1f61f.png","yawning_face":"1f971.png","yellow_heart":"1f49b.png","yum":"1f60b.png","zany_face":"1f92a.png","zipper_mouth_face":"1f910.png","zzz":"1f4a4.png"},"enableQQ":false,"highlight":true,"lang":"zh-cn","pageSize":10,"placeholder":"你的评论 ...","recordIP":true,"serverURLs":"https://leancloud.hugoloveit.com","visitor":true}},"lightGallery":{"actualSize":false,"exThumbImage":"data-thumbnail","hideBarsDelay":2000,"selector":".lightgallery","speed":400,"thumbContHeight":80,"thumbWidth":80,"thumbnail":true},"search":{"algoliaAppID":"4G4N2WV1XL","algoliaIndex":"index.zh-cn","algoliaSearchKey":"199dbfba1469d7cc46c636a26f72a8c7","highlightTag":"em","maxResultLength":10,"noResultsFound":"没有找到结果","snippetLength":50,"type":"algolia"}};</script><script type="text/javascript" src="/js/theme.min.js"></script></body>
+</html>

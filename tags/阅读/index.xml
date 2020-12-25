@@ -1,0 +1,56 @@
+<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
+    <channel>
+        <title>阅读 - 标签 - lnback&#39; s blog</title>
+        <link>https://example.com/tags/%E9%98%85%E8%AF%BB/</link>
+        <description>阅读 - 标签 - lnback&#39; s blog</description>
+        <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright><lastBuildDate>Tue, 15 Dec 2020 10:26:30 &#43;0800</lastBuildDate><atom:link href="https://example.com/tags/%E9%98%85%E8%AF%BB/" rel="self" type="application/rss+xml" /><item>
+    <title>《Redis设计与实现》（七）复制</title>
+    <link>https://example.com/7.%E5%A4%8D%E5%88%B6/</link>
+    <pubDate>Tue, 15 Dec 2020 10:26:30 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://example.com/7.%E5%A4%8D%E5%88%B6/</guid>
+    <description><![CDATA[复制 本章将介绍2.8以前的老版复制功能和2.8以后的新版复制功能，讲解机制和优劣势。 在Redis中，用户可以通过执行SLAVEOF命令或者设]]></description>
+</item><item>
+    <title>《Redis设计与实现》（六）客户端和服务器</title>
+    <link>https://example.com/6.%E5%AE%A2%E6%88%B7%E7%AB%AF%E5%92%8C%E6%9C%8D%E5%8A%A1%E5%99%A8/</link>
+    <pubDate>Fri, 11 Dec 2020 10:57:30 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://example.com/6.%E5%AE%A2%E6%88%B7%E7%AB%AF%E5%92%8C%E6%9C%8D%E5%8A%A1%E5%99%A8/</guid>
+    <description><![CDATA[客户端和服务器 一、客户端 Redis服务器是典型的一对多服务器程序：一个服务器可以与多个客户端建立网络连接，处理他们的请求。 通过使用由I/O多]]></description>
+</item><item>
+    <title>《Redis设计与实现》（五）事件</title>
+    <link>https://example.com/5.%E4%BA%8B%E4%BB%B6/</link>
+    <pubDate>Wed, 09 Dec 2020 14:51:30 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://example.com/5.%E4%BA%8B%E4%BB%B6/</guid>
+    <description><![CDATA[事件 Redis是一个事件驱动程序，前面提到，服务器需要处理文件事件和时间事件。 文件事件：Redis服务器通过套接字与客户端（或者与其他Red]]></description>
+</item><item>
+    <title>《Redis设计与实现》（四）持久化</title>
+    <link>https://example.com/4.%E6%8C%81%E4%B9%85%E5%8C%96/</link>
+    <pubDate>Wed, 09 Dec 2020 12:55:30 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://example.com/4.%E6%8C%81%E4%B9%85%E5%8C%96/</guid>
+    <description><![CDATA[持久化 一、RDB持久化 将服务器中的非空数据库以及它们的键值对统称为数据库状态。下图三个非空数据库，以及其中的键值对就是该服务器的数据库状态。]]></description>
+</item><item>
+    <title>《Redis设计与实现》（三）数据库</title>
+    <link>https://example.com/3.%E6%95%B0%E6%8D%AE%E5%BA%93/</link>
+    <pubDate>Mon, 07 Dec 2020 20:34:30 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://example.com/3.%E6%95%B0%E6%8D%AE%E5%BA%93/</guid>
+    <description><![CDATA[数据库 一、服务器中的数据库 &amp; 数据库的切换 Redis服务器将所有数据结构都保存在服务器状态redis.h/redisServer结构的db数组]]></description>
+</item><item>
+    <title>《Redis设计与实现》（一）数据结构</title>
+    <link>https://example.com/1.%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/</link>
+    <pubDate>Fri, 04 Dec 2020 17:55:30 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://example.com/1.%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/</guid>
+    <description><![CDATA[Redis中的数据结构 一、简单动态字符串 引言 Redis中没有直接使用C语言传统的字符串表示（以空字符结尾的字符数组），而是自己构建了一种简单]]></description>
+</item><item>
+    <title>《Redis设计与实现》（二）对象</title>
+    <link>https://example.com/2.%E5%AF%B9%E8%B1%A1/</link>
+    <pubDate>Fri, 04 Dec 2020 17:55:30 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://example.com/2.%E5%AF%B9%E8%B1%A1/</guid>
+    <description><![CDATA[对象 引言 前一章介绍了Redis的主要数据结构，但Redis并没有直接使用这些数据结构来实现键值对数据库， 而是基于这些数据结构创建了一个对象系]]></description>
+</item></channel>
+</rss>
