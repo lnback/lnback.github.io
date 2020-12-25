@@ -1,6 +1,6 @@
 # 关于我
 
-![image]()
+![image](https://lnback.cn/img/about.jpg)
 关于我
 - CTGU lnback
 - 邮箱：lna1374@qq.com
