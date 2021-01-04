@@ -144,8 +144,8 @@
         "uri": "posts/4.原型模式",
         "content": "hash     rpc            io                                                                                                                                                          Java C                         JS          JS                       JS                                                   A                                                                       1        2  go package prototype import    encoding json   time    type Keyword struct   word string visit int UpdatedAt  time Time                          func  k Keyword  Clone   Keyword   var newKeyword    Keyword   b   _    json Marshal k  json Unmarshal b  newKeyword  return newKeyword   type Keywords map string  Keyword func  words Keywords  Clone updateWords    Keyword  Keywords   newKeywords    Keywords                        k v    range words  newKeywords k    v           _ word    range updateWords  newKeywords word word    word Clone     return newKeywords           go package prototype import    fmt   github com stretchr testify assert   testing   time    func TestKeywords_Clone t  testing T    updateAt  _    time Parse  2006    2020   words    Keywords   testA    Keyword  word   testA   visit  1  UpdatedAt   updateAt      testB    Keyword  word   testB   visit  2  UpdatedAt   updateAt      testC    Keyword  word   testC   visit  3  UpdatedAt   updateAt          time Now   updatedWords       Keyword    word   testB   visit  10  UpdatedAt   now          words Clone updatedWords  fmt Println assert Equal t  words  testA    got  testA     fmt Println assert NotEqual t  words  testB    got  testB     fmt Println assert NotEqual t  updatedWords 0   got  testB     fmt Println assert Equal t  words  testC    got  testC",
         "objectID": "posts/4.原型模式",
-        "date": "2021-01-04T12:43:30.000Z",
-        "lastmod": "2021-01-04T12:43:30.000Z",
+        "date": "2021-01-04T12:01:30.000Z",
+        "lastmod": "2021-01-04T12:01:30.000Z",
         "draft": false,
         "featuredImg": "",
         "tags": [
