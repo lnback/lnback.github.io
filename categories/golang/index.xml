@@ -3,7 +3,14 @@
         <title>Golang - 分类 - lnback&#39; s blog</title>
         <link>https://example.com/categories/golang/</link>
         <description>Golang - 分类 - lnback&#39; s blog</description>
-        <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright><lastBuildDate>Mon, 04 Jan 2021 19:57:30 &#43;0800</lastBuildDate><atom:link href="https://example.com/categories/golang/" rel="self" type="application/rss+xml" /><item>
+        <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright><lastBuildDate>Mon, 04 Jan 2021 20:01:30 &#43;0800</lastBuildDate><atom:link href="https://example.com/categories/golang/" rel="self" type="application/rss+xml" /><item>
+    <title>《用Go实现设计模式》四、原型模式</title>
+    <link>https://example.com/4.%E5%8E%9F%E5%9E%8B%E6%A8%A1%E5%BC%8F/</link>
+    <pubDate>Mon, 04 Jan 2021 20:01:30 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://example.com/4.%E5%8E%9F%E5%9E%8B%E6%A8%A1%E5%BC%8F/</guid>
+    <description><![CDATA[原型模式 定义 利用已有对象（原型）进行复制（拷贝）的方式来创建新对象，已达到节省创建时间的目的。 使用场景 对象的创建成本较大，并且同一个类的不同]]></description>
+</item><item>
     <title>《用Go实现设计模式》三、建造者模式</title>
     <link>https://example.com/3.%E5%BB%BA%E9%80%A0%E8%80%85%E6%A8%A1%E5%BC%8F/</link>
     <pubDate>Mon, 04 Jan 2021 19:57:30 &#43;0800</pubDate>

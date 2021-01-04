@@ -3,9 +3,16 @@
         <title>lnback&#39; s blog</title>
         <link>https://example.com/</link>
         <description>LLY 的个人博客</description>
-        <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright><lastBuildDate>Mon, 04 Jan 2021 19:57:30 &#43;0800</lastBuildDate>
+        <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright><lastBuildDate>Mon, 04 Jan 2021 20:01:30 &#43;0800</lastBuildDate>
             <atom:link href="https://example.com/index.xml" rel="self" type="application/rss+xml" />
         <item>
+    <title>《用Go实现设计模式》四、原型模式</title>
+    <link>https://example.com/4.%E5%8E%9F%E5%9E%8B%E6%A8%A1%E5%BC%8F/</link>
+    <pubDate>Mon, 04 Jan 2021 20:01:30 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://example.com/4.%E5%8E%9F%E5%9E%8B%E6%A8%A1%E5%BC%8F/</guid>
+    <description><![CDATA[原型模式 定义 利用已有对象（原型）进行复制（拷贝）的方式来创建新对象，已达到节省创建时间的目的。 使用场景 对象的创建成本较大，并且同一个类的不同]]></description>
+</item><item>
     <title>《用Go实现设计模式》三、建造者模式</title>
     <link>https://example.com/3.%E5%BB%BA%E9%80%A0%E8%80%85%E6%A8%A1%E5%BC%8F/</link>
     <pubDate>Mon, 04 Jan 2021 19:57:30 &#43;0800</pubDate>
@@ -68,12 +75,5 @@
     <author>作者</author>
     <guid>https://example.com/5.%E4%BA%8B%E4%BB%B6/</guid>
     <description><![CDATA[事件 Redis是一个事件驱动程序，前面提到，服务器需要处理文件事件和时间事件。 文件事件：Redis服务器通过套接字与客户端（或者与其他Red]]></description>
-</item><item>
-    <title>《Redis设计与实现》（四）持久化</title>
-    <link>https://example.com/4.%E6%8C%81%E4%B9%85%E5%8C%96/</link>
-    <pubDate>Wed, 09 Dec 2020 12:55:30 &#43;0800</pubDate>
-    <author>作者</author>
-    <guid>https://example.com/4.%E6%8C%81%E4%B9%85%E5%8C%96/</guid>
-    <description><![CDATA[持久化 一、RDB持久化 将服务器中的非空数据库以及它们的键值对统称为数据库状态。下图三个非空数据库，以及其中的键值对就是该服务器的数据库状态。]]></description>
 </item></channel>
 </rss>
