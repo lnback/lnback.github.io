@@ -3,9 +3,30 @@
         <title>lnback&#39; s blog</title>
         <link>https://example.com/</link>
         <description>LLY 的个人博客</description>
-        <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright><lastBuildDate>Mon, 21 Dec 2020 00:00:00 &#43;0000</lastBuildDate>
+        <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright><lastBuildDate>Mon, 04 Jan 2021 19:57:30 &#43;0800</lastBuildDate>
             <atom:link href="https://example.com/index.xml" rel="self" type="application/rss+xml" />
         <item>
+    <title>《用Go实现设计模式》三、建造者模式</title>
+    <link>https://example.com/3.%E5%BB%BA%E9%80%A0%E8%80%85%E6%A8%A1%E5%BC%8F/</link>
+    <pubDate>Mon, 04 Jan 2021 19:57:30 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://example.com/3.%E5%BB%BA%E9%80%A0%E8%80%85%E6%A8%A1%E5%BC%8F/</guid>
+    <description><![CDATA[建造者模式 建造者模式，是将一个复杂的对象的构建与它的表示分离，使得同样的构建过程可以创建不同的表示。创建者模式隐藏了复杂对象的创建过程，它把]]></description>
+</item><item>
+    <title>《用Go实现设计模式》二、工厂模式</title>
+    <link>https://example.com/2.%E5%B7%A5%E5%8E%82%E6%A8%A1%E5%BC%8F/</link>
+    <pubDate>Mon, 04 Jan 2021 17:45:30 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://example.com/2.%E5%B7%A5%E5%8E%82%E6%A8%A1%E5%BC%8F/</guid>
+    <description><![CDATA[工厂模式 如何判断使用工厂模式 封装变化 创建逻辑有可能变化，封装成工厂类之后，创建逻辑的变更对调用者透明。 代码复用 创建代码抽离到独立的工厂类之后]]></description>
+</item><item>
+    <title>《用Go实现设计模式》一、单例模式</title>
+    <link>https://example.com/1.%E5%8D%95%E4%BE%8B%E6%A8%A1%E5%BC%8F/</link>
+    <pubDate>Mon, 04 Jan 2021 12:43:30 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://example.com/1.%E5%8D%95%E4%BE%8B%E6%A8%A1%E5%BC%8F/</guid>
+    <description><![CDATA[单例模式 定义 一个类只允许创建一个对象（或者叫实例），那这个类就是一个单例类，这种设计模式就叫作单例设计模式，简称单例模式。 用处 从业务概念上，]]></description>
+</item><item>
     <title>Go语言的CSP模型</title>
     <link>https://example.com/go%E8%AF%AD%E8%A8%80%E7%9A%84csp%E6%A8%A1%E5%9E%8B/</link>
     <pubDate>Fri, 18 Dec 2020 18:16:30 &#43;0800</pubDate>
@@ -54,26 +75,5 @@
     <author>作者</author>
     <guid>https://example.com/4.%E6%8C%81%E4%B9%85%E5%8C%96/</guid>
     <description><![CDATA[持久化 一、RDB持久化 将服务器中的非空数据库以及它们的键值对统称为数据库状态。下图三个非空数据库，以及其中的键值对就是该服务器的数据库状态。]]></description>
-</item><item>
-    <title>《Redis设计与实现》（三）数据库</title>
-    <link>https://example.com/3.%E6%95%B0%E6%8D%AE%E5%BA%93/</link>
-    <pubDate>Mon, 07 Dec 2020 20:34:30 &#43;0800</pubDate>
-    <author>作者</author>
-    <guid>https://example.com/3.%E6%95%B0%E6%8D%AE%E5%BA%93/</guid>
-    <description><![CDATA[数据库 一、服务器中的数据库 &amp; 数据库的切换 Redis服务器将所有数据结构都保存在服务器状态redis.h/redisServer结构的db数组]]></description>
-</item><item>
-    <title>《Redis设计与实现》（一）数据结构</title>
-    <link>https://example.com/1.%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/</link>
-    <pubDate>Fri, 04 Dec 2020 17:55:30 &#43;0800</pubDate>
-    <author>作者</author>
-    <guid>https://example.com/1.%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/</guid>
-    <description><![CDATA[Redis中的数据结构 一、简单动态字符串 引言 Redis中没有直接使用C语言传统的字符串表示（以空字符结尾的字符数组），而是自己构建了一种简单]]></description>
-</item><item>
-    <title>《Redis设计与实现》（二）对象</title>
-    <link>https://example.com/2.%E5%AF%B9%E8%B1%A1/</link>
-    <pubDate>Fri, 04 Dec 2020 17:55:30 &#43;0800</pubDate>
-    <author>作者</author>
-    <guid>https://example.com/2.%E5%AF%B9%E8%B1%A1/</guid>
-    <description><![CDATA[对象 引言 前一章介绍了Redis的主要数据结构，但Redis并没有直接使用这些数据结构来实现键值对数据库， 而是基于这些数据结构创建了一个对象系]]></description>
 </item></channel>
 </rss>
