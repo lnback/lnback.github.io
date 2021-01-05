@@ -220,6 +220,25 @@
         "lightgallery": true
     },
     {
+        "title": "Go的接口型函数",
+        "uri": "posts/接口型函数",
+        "content": "Go                          go type Getter interface   Get key string   string error    type GetterFunc func key string   string error  func  f GetterFunc  Get key string   string error   return f key               Getter         Get key string   string  error              GetterFunc GetterFunc       Getter Get         GetterFunc    Get     Get                Getter   GetterFunc                                                       Getter            Get                                         GetFromSource                    Getter           go func GetFromSource getter Getter s string  string   buf   err    getter Get s    fmt Println err  err    nil  return buf   return                     GetFromSource      GetterFunc                       go GetFromSource GetterFunc func key string   return  func     key   nil     hello      go func test key string  string error   return  func     key nil   func main    GetFromSource GetterFunc test   hello                    Getter  go type GetterStruct struct    func  str   GetterStruct  Get key string  string error    v     struct     key return v nil   func main    GetFromSource new GetterStruct   hello                                                                                                                                                                                groupcache go           net http Handler HandlerFunc        go type Handler interface  ServeHTTP ResponseWriter  Request    type HandlerFunc func ResponseWriter  Request  func  f HandlerFunc  ServeHTTP w ResponseWriter r   Request   f w r       net http     http Handle              go func Handle pattern string handler Handler            Handler              go func index w http ResponseWriter r  http Request   w WriteHeader http StatusOK      w Write   byte  hello index page      func main    http Handle   index  http HandlerFunc index   _   http ListenAndServe  localhost 8080  nil           Handle                  http HandleFunc   go func HandleFunc pattern string handler func ResponseWriter  Request                              index   HandleFunc    go func main    http HandleFunc   index  index  _    http ListenAndServe  localhost 8080  nil           HandleFunc         patter HandlerFunc    Handle       go func  mux ServeMux  HandleFunc pattern string  handler func ResponseWriter  Request     handler    nil   panic  http  nil handler     mux Handle pattern  HandlerFunc handler",
+        "objectID": "posts/接口型函数",
+        "date": "2021-01-05T02:30:30.000Z",
+        "lastmod": null,
+        "draft": false,
+        "featuredImg": "",
+        "tags": [
+            "Go"
+        ],
+        "categories": [
+            "Golang"
+        ],
+        "author": "lnback",
+        "description": "",
+        "lightgallery": true
+    },
+    {
         "title": "Go语言的CSP模型",
         "uri": "posts/go语言的CSP模型",
         "content": "go           goroutine     channel          CSP                1 1    CSP  CSP Communicating Sequential Process                                                                         channel                 Actor   CSP channel                               channel       CSP                                                  Occam Limbo Golang           Golang       CSP            Process Channel        goroutine channel                  Process       Channel Channel        Process         Process  Channel                        1 2 Golang CSP                        Go    CSP                           Channel               Golang    CSP                            Go          CSP              process channel      process go        goroutine goroutine                   channel        Go   CSP      goroutine   channel     goroutine                                                              channel    Unix Pipe                           channel      1 3 Channel goroutine channel Go            goroutine         channel  goroutine          channel goroutine                    goroutine        goroutine                         channel                  goroutine        1 3 1 channel  CSP                            channel     channel             linux       channel        go chan T             chan                                   chan    2                              channel                               Channel                      channel                                                               ready                                                                                                                                                                                                                                1 4 Goroutine Goroutine                     coroutine      coroutine                   greenthread go      coroutine                                                                                                      java 1 3    greenthread   JVM       java             ruby  fiber                      goroutine  golang              IO                                             1 5 Goroutine",
