@@ -3,7 +3,14 @@
         <title>所有文章 - lnback&#39; s blog</title>
         <link>https://example.com/posts/</link>
         <description>所有文章 | lnback&#39; s blog</description>
-        <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright><lastBuildDate>Mon, 04 Jan 2021 19:58:30 &#43;0800</lastBuildDate><atom:link href="https://example.com/posts/" rel="self" type="application/rss+xml" /><item>
+        <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright><lastBuildDate>Tue, 05 Jan 2021 10:30:30 &#43;0800</lastBuildDate><atom:link href="https://example.com/posts/" rel="self" type="application/rss+xml" /><item>
+    <title>Go的接口型函数</title>
+    <link>https://example.com/%E6%8E%A5%E5%8F%A3%E5%9E%8B%E5%87%BD%E6%95%B0/</link>
+    <pubDate>Tue, 05 Jan 2021 10:30:30 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://example.com/%E6%8E%A5%E5%8F%A3%E5%9E%8B%E5%87%BD%E6%95%B0/</guid>
+    <description><![CDATA[Go的接口型函数 接口型函数 先看看接口型函数的代码 1 2 3 4 5 6 7 8 9 type Getter interface { Get(key string) (string,error) } type GetterFunc func(key string) (string,error) func (f GetterFunc) Get(key string) (string,error){ return f(key) } 这里定义了一个接口Getter]]></description>
+</item><item>
     <title>《用Go实现设计模式》四、原型模式</title>
     <link>https://example.com/4.%E5%8E%9F%E5%9E%8B%E6%A8%A1%E5%BC%8F/</link>
     <pubDate>Mon, 04 Jan 2021 19:58:30 &#43;0800</pubDate>
@@ -66,12 +73,5 @@
     <author>作者</author>
     <guid>https://example.com/goroutine/</guid>
     <description><![CDATA[Go并发调度：G-P-M 模型 1. GPM模型 G：Goroutine的简称，上面用go关键字家函数调用的代码就是创建了一个G对象。 M：Machin]]></description>
-</item><item>
-    <title>《Redis设计与实现》（五）事件</title>
-    <link>https://example.com/5.%E4%BA%8B%E4%BB%B6/</link>
-    <pubDate>Wed, 09 Dec 2020 14:51:30 &#43;0800</pubDate>
-    <author>作者</author>
-    <guid>https://example.com/5.%E4%BA%8B%E4%BB%B6/</guid>
-    <description><![CDATA[事件 Redis是一个事件驱动程序，前面提到，服务器需要处理文件事件和时间事件。 文件事件：Redis服务器通过套接字与客户端（或者与其他Red]]></description>
 </item></channel>
 </rss>

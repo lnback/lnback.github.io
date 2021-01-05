@@ -3,7 +3,14 @@
         <title>Go - 标签 - lnback&#39; s blog</title>
         <link>https://example.com/tags/go/</link>
         <description>Go - 标签 - lnback&#39; s blog</description>
-        <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright><lastBuildDate>Mon, 04 Jan 2021 19:58:30 &#43;0800</lastBuildDate><atom:link href="https://example.com/tags/go/" rel="self" type="application/rss+xml" /><item>
+        <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright><lastBuildDate>Tue, 05 Jan 2021 10:30:30 &#43;0800</lastBuildDate><atom:link href="https://example.com/tags/go/" rel="self" type="application/rss+xml" /><item>
+    <title>Go的接口型函数</title>
+    <link>https://example.com/%E6%8E%A5%E5%8F%A3%E5%9E%8B%E5%87%BD%E6%95%B0/</link>
+    <pubDate>Tue, 05 Jan 2021 10:30:30 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://example.com/%E6%8E%A5%E5%8F%A3%E5%9E%8B%E5%87%BD%E6%95%B0/</guid>
+    <description><![CDATA[Go的接口型函数 接口型函数 先看看接口型函数的代码 1 2 3 4 5 6 7 8 9 type Getter interface { Get(key string) (string,error) } type GetterFunc func(key string) (string,error) func (f GetterFunc) Get(key string) (string,error){ return f(key) } 这里定义了一个接口Getter]]></description>
+</item><item>
     <title>《用Go实现设计模式》四、原型模式</title>
     <link>https://example.com/4.%E5%8E%9F%E5%9E%8B%E6%A8%A1%E5%BC%8F/</link>
     <pubDate>Mon, 04 Jan 2021 19:58:30 &#43;0800</pubDate>
