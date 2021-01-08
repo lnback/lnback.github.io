@@ -5,32 +5,32 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="robots" content="noodp" />
         <meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1">
-        <title>Go并发编程(二)RWMutex - lnback&#39; s blog</title><meta name="Description" content="LLY 的个人博客"><meta property="og:title" content="Go并发编程(二)RWMutex" />
-<meta property="og:description" content="RWMutex Mutex可以保证只有一个goroutine来访问共享资源，这在某些情况下有点浪费。比如说，在写少读多的情况下，即使一段时间内没有写操作，" />
+        <title>Go并发编程(四)Once - lnback&#39; s blog</title><meta name="Description" content="LLY 的个人博客"><meta property="og:title" content="Go并发编程(四)Once" />
+<meta property="og:description" content="Once Once是一个很简单的并发原语，用来保证仅仅执行一次动作，常用于单例对象的初始化场景 介绍 案例 用单例对象的创建来介绍一下Once的 在Java" />
 <meta property="og:type" content="article" />
-<meta property="og:url" content="https://example.com/2.rwmutex/" />
+<meta property="og:url" content="https://example.com/4.once/" />
 <meta property="og:image" content="https://example.com/logo.png"/>
-<meta property="article:published_time" content="2021-01-07T15:56:30+08:00" />
-<meta property="article:modified_time" content="2021-01-07T15:56:30+08:00" />
+<meta property="article:published_time" content="2021-01-08T18:19:30+08:00" />
+<meta property="article:modified_time" content="2021-01-08T18:19:30+08:00" />
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:image" content="https://example.com/logo.png"/>
 
-<meta name="twitter:title" content="Go并发编程(二)RWMutex"/>
-<meta name="twitter:description" content="RWMutex Mutex可以保证只有一个goroutine来访问共享资源，这在某些情况下有点浪费。比如说，在写少读多的情况下，即使一段时间内没有写操作，"/>
+<meta name="twitter:title" content="Go并发编程(四)Once"/>
+<meta name="twitter:description" content="Once Once是一个很简单的并发原语，用来保证仅仅执行一次动作，常用于单例对象的初始化场景 介绍 案例 用单例对象的创建来介绍一下Once的 在Java"/>
 <meta name="application-name" content="lnback">
 <meta name="apple-mobile-web-app-title" content="lnback"><meta name="theme-color" content="#ffffff"><meta name="msapplication-TileColor" content="#da532c"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
         <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="https://example.com/2.rwmutex/" /><link rel="prev" href="https://example.com/1.mutex/" /><link rel="next" href="https://example.com/3.waitgroup/" /><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/normalize.css@8.0.1/normalize.min.css"><link rel="stylesheet" href="/css/style.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.13.0/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.7.2/animate.min.css"><script type="application/ld+json">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="https://example.com/4.once/" /><link rel="prev" href="https://example.com/3.waitgroup/" /><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/normalize.css@8.0.1/normalize.min.css"><link rel="stylesheet" href="/css/style.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.13.0/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.7.2/animate.min.css"><script type="application/ld+json">
     {
         "@context": "http://schema.org",
         "@type": "BlogPosting",
-        "headline": "Go并发编程(二)RWMutex",
+        "headline": "Go并发编程(四)Once",
         "inLanguage": "zh-CN",
         "mainEntityOfPage": {
             "@type": "WebPage",
-            "@id": "https:\/\/example.com\/2.rwmutex\/"
-        },"genre": "posts","keywords": "Go, 并发","wordcount":  1421 ,
-        "url": "https:\/\/example.com\/2.rwmutex\/","datePublished": "2021-01-07T15:56:30+08:00","dateModified": "2021-01-07T15:56:30+08:00","license": "This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.","publisher": {
+            "@id": "https:\/\/example.com\/4.once\/"
+        },"genre": "posts","keywords": "Go, 并发","wordcount":  696 ,
+        "url": "https:\/\/example.com\/4.once\/","datePublished": "2021-01-08T18:19:30+08:00","dateModified": "2021-01-08T18:19:30+08:00","license": "This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.","publisher": {
             "@type": "Organization",
             "name": "xxxx","logo": "https:\/\/example.com\/images\/avatar.png"},"author": {
                 "@type": "Person",
@@ -104,10 +104,10 @@
                 <div class="container"><div class="toc" id="toc-auto">
             <h2 class="toc-title">目录</h2>
             <div class="toc-content" id="toc-content-auto"></div>
-        </div><article class="page single"><h1 class="single-title animated flipInX">Go并发编程(二)RWMutex</h1><div class="post-meta">
+        </div><article class="page single"><h1 class="single-title animated flipInX">Go并发编程(四)Once</h1><div class="post-meta">
             <div class="post-meta-line"><span class="post-author"><a href="/" title="Author" rel=" author" class="author"><i class="fas fa-user-circle fa-fw"></i>lnback</a></span>&nbsp;<span class="post-category">收录于 <a href="/categories/golang/"><i class="far fa-folder fa-fw"></i>Golang</a></span></div>
-            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2021-01-07">2021-01-07</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 1421 字&nbsp;
-                <i class="far fa-clock fa-fw"></i>&nbsp;预计阅读 3 分钟&nbsp;<span id="/2.rwmutex/" class="leancloud_visitors" data-flag-title="Go并发编程(二)RWMutex">
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2021-01-08">2021-01-08</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 696 字&nbsp;
+                <i class="far fa-clock fa-fw"></i>&nbsp;预计阅读 2 分钟&nbsp;<span id="/4.once/" class="leancloud_visitors" data-flag-title="Go并发编程(四)Once">
                         <i class="far fa-eye fa-fw"></i>&nbsp;<span class=leancloud-visitors-count></span>&nbsp;次阅读
                     </span>&nbsp;</div>
         </div><div class="details toc" id="toc-static"  kept="">
@@ -117,36 +117,23 @@
                 </div>
                 <div class="details-content toc-content" id="toc-content-static"><nav id="TableOfContents">
   <ul>
-    <li><a href="#介绍">介绍</a></li>
-    <li><a href="#go中的rwmutex">Go中的RWMutex</a></li>
-    <li><a href="#源码">源码</a>
+    <li><a href="#介绍">介绍</a>
       <ul>
-        <li><a href="#基本结构">基本结构</a></li>
-        <li><a href="#rlockrunlock">RLock/RUnlock</a></li>
-        <li><a href="#lock">Lock</a></li>
-        <li><a href="#unlock">Unlock</a></li>
+        <li><a href="#案例">案例</a></li>
       </ul>
     </li>
+    <li><a href="#源码">源码</a></li>
     <li><a href="#总结">总结</a></li>
   </ul>
 </nav></div>
-            </div><div class="content" id="content"><h1 id="rwmutex">RWMutex</h1>
+            </div><div class="content" id="content"><h1 id="once">Once</h1>
 <blockquote>
-<p>Mutex可以保证只有一个goroutine来访问共享资源，这在某些情况下有点浪费。比如说，在写少读多的情况下，即使一段时间内没有写操作，大量并发的读操作也会变成串行访问，这个时候就会对性能有影响。这时候就需要将读写操作分离开来，也就有了RWMutex。</p>
+<p>Once是一个很简单的并发原语，用来保证仅仅执行一次动作，常用于单例对象的初始化场景</p>
 </blockquote>
 <h2 id="介绍">介绍</h2>
-<p>有一种问题叫做readers-writers问题，简单来说就是：同时可以有多个读或者多个写，但只要有一个进程在进行写操作，其他的线程都不能执行写操作。读写锁RWMutex就是来解决这类问题的。</p>
-<h2 id="go中的rwmutex">Go中的RWMutex</h2>
-<p>Go标准库中的RWMutex设计师基于Write-preferring方法。一个正在阻塞的Lock调用会排除新的reader请求到锁。</p>
-<p>RWMutex的方法也很少，只有5个</p>
-<ul>
-<li>Lock/Unlock：写操作时调用的方法。</li>
-<li>RLock/RUnlock：读操作是调用的方法。</li>
-<li>RLocker：这个方法的作用是返回一个Locker对象。Lock方法会调用RLock，Unlock会调用RUnlock。</li>
-</ul>
-<h2 id="源码">源码</h2>
-<h3 id="基本结构">基本结构</h3>
-<p>RWMutex包含一个Mutex，以及四个辅助字段writerSem、readerSem、readerCount和readerWait：</p>
+<h3 id="案例">案例</h3>
+<p>用单例对象的创建来介绍一下Once的
+在Java中有一种单例模式的创建模式叫双重检测锁，在go中可以用once来实现。</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
 <pre class="chroma"><code><span class="lnt"> 1
@@ -159,21 +146,33 @@
 </span><span class="lnt"> 8
 </span><span class="lnt"> 9
 </span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">type</span> <span class="nx">RWMutex</span> <span class="kd">struct</span> <span class="p">{</span>
-	<span class="nx">w</span>           <span class="nx">Mutex</span>  <span class="c1">// 互斥锁解决多个writers的竞争
-</span><span class="c1"></span>	<span class="nx">writerSem</span>   <span class="kt">uint32</span> <span class="c1">// writer信号量
-</span><span class="c1"></span>	<span class="nx">readerSem</span>   <span class="kt">uint32</span> <span class="c1">// reader信号量
-</span><span class="c1"></span>	<span class="nx">readerCount</span> <span class="kt">int32</span>  <span class="c1">// reader的数量
-</span><span class="c1"></span>	<span class="nx">readerWait</span>  <span class="kt">int32</span>  <span class="c1">// writer等待完成的reader的数量
-</span><span class="c1"></span><span class="p">}</span>
-<span class="c1">//定义了最大的reader数量
-</span><span class="c1">//这里也是一个值表示多个意思。用 32 位的 readerCount 的首位（符号位）来标记是否有 writer 等待。而且设置 rwmutexMaxReaders = 1 &lt;&lt; 30，保留了左边第 2 位，防止 +-1 操作溢出。
-</span><span class="c1"></span><span class="kd">const</span> <span class="nx">rwmutexMaxReaders</span> <span class="p">=</span> <span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="mi">30</span> 
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">type</span> <span class="nx">Singleton</span> <span class="kd">struct</span><span class="p">{}</span>
+
+<span class="kd">var</span> <span class="p">(</span>
+    <span class="nx">singleton</span> <span class="o">*</span><span class="nx">Singleton</span>
+    <span class="nx">once</span> <span class="nx">sync</span><span class="p">.</span><span class="nx">Once</span>
+<span class="p">)</span>
+
+<span class="kd">func</span> <span class="nf">GetInstance</span><span class="p">()</span> <span class="o">*</span><span class="nx">Singleton</span><span class="p">{</span>
+    <span class="k">if</span> <span class="nx">singleton</span> <span class="o">==</span> <span class="kc">nil</span><span class="p">{</span>
+        <span class="nx">once</span><span class="p">.</span><span class="nf">Do</span><span class="p">(</span><span class="kd">func</span><span class="p">(){</span>
+            <span class="nx">singleton</span> <span class="p">=</span> <span class="o">&amp;</span><span class="nx">Singleton</span><span class="p">{}</span>
+        <span class="p">})</span>
+    <span class="p">}</span>
+
+    <span class="k">return</span> <span class="nx">singleton</span>
+<span class="p">}</span>
 </code></pre></td></tr></table>
 </div>
-</div><h3 id="rlockrunlock">RLock/RUnlock</h3>
+</div><h2 id="源码">源码</h2>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
 <pre class="chroma"><code><span class="lnt"> 1
@@ -196,115 +195,114 @@
 </span><span class="lnt">18
 </span><span class="lnt">19
 </span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="p">(</span><span class="nx">rw</span> <span class="o">*</span><span class="nx">RWMutex</span><span class="p">)</span> <span class="nf">RLock</span><span class="p">()</span> <span class="p">{</span>
-	<span class="k">if</span> <span class="nx">atomic</span><span class="p">.</span><span class="nf">AddInt32</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">rw</span><span class="p">.</span><span class="nx">readerCount</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="p">&lt;</span> <span class="mi">0</span> <span class="p">{</span>
-        <span class="c1">// A writer is pending, wait for it.
-</span><span class="c1"></span>        <span class="c1">// rw.readerCount是负值的时候，意味着有writer在等待请求锁，把后面的reader都阻塞休眠
-</span><span class="c1"></span>		<span class="nf">runtime_SemacquireMutex</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">rw</span><span class="p">.</span><span class="nx">readerSem</span><span class="p">,</span> <span class="kc">false</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
-	<span class="p">}</span>
-<span class="p">}</span>
-<span class="kd">func</span> <span class="p">(</span><span class="nx">rw</span> <span class="o">*</span><span class="nx">RWMutex</span><span class="p">)</span> <span class="nf">RUnlock</span><span class="p">(){</span>
-	<span class="k">if</span> <span class="nx">r</span> <span class="o">:=</span> <span class="nx">atomic</span><span class="p">.</span><span class="nf">AddInt32</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">rw</span><span class="p">.</span><span class="nx">readerCount</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">);</span> <span class="nx">r</span> <span class="p">&lt;</span> <span class="mi">0</span> <span class="p">{</span>
-		<span class="c1">// Outlined slow-path to allow the fast-path to be inlined
-</span><span class="c1"></span>		<span class="nx">rw</span><span class="p">.</span><span class="nf">rUnlockSlow</span><span class="p">(</span><span class="nx">r</span><span class="p">)</span>
-	<span class="p">}</span>
-<span class="p">}</span>
-
-<span class="kd">func</span> <span class="p">(</span><span class="nx">rw</span> <span class="o">*</span><span class="nx">RWMutex</span><span class="p">)</span> <span class="nf">rUnlockSlow</span><span class="p">(</span><span class="nx">r</span> <span class="kt">int32</span><span class="p">)</span> <span class="p">{</span>
-	<span class="k">if</span> <span class="nx">atomic</span><span class="p">.</span><span class="nf">AddInt32</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">rw</span><span class="p">.</span><span class="nx">readerWait</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="p">{</span>
-		<span class="c1">// The last reader unblocks the writer.
-</span><span class="c1"></span>		<span class="nf">runtime_Semrelease</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">rw</span><span class="p">.</span><span class="nx">writerSem</span><span class="p">,</span> <span class="kc">false</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-	<span class="p">}</span>
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="p">(</span><span class="nx">o</span> <span class="o">*</span><span class="nx">Once</span><span class="p">)</span> <span class="nf">Do</span><span class="p">(</span><span class="nx">f</span> <span class="kd">func</span><span class="p">())</span> <span class="p">{</span>
+        <span class="c1">// 在这里有一段note 讲了一下为什么不直接使用CAS来保证Once只执行一次
+</span><span class="c1"></span>
+	<span class="c1">// Note: Here is an incorrect implementation of Do:
+</span><span class="c1"></span>	<span class="c1">//
+</span><span class="c1"></span>	<span class="c1">//	if atomic.CompareAndSwapUint32(&amp;o.done, 0, 1) {
+</span><span class="c1"></span>	<span class="c1">//		f()
+</span><span class="c1"></span>	<span class="c1">//	}
+</span><span class="c1"></span>	<span class="c1">//
+</span><span class="c1"></span>	<span class="c1">// Do guarantees that when it returns, f has finished.
+</span><span class="c1"></span>	<span class="c1">// This implementation would not implement that guarantee:
+</span><span class="c1"></span>	<span class="c1">// given two simultaneous calls, the winner of the cas would
+</span><span class="c1"></span>	<span class="c1">// call f, and the second would return immediately, without
+</span><span class="c1"></span>	<span class="c1">// waiting for the first&#39;s call to f to complete.
+</span><span class="c1"></span>	<span class="c1">// This is why the slow path falls back to a mutex, and why
+</span><span class="c1"></span>	<span class="c1">// the atomic.StoreUint32 must be delayed until after f returns.
+</span><span class="c1"></span>
+	<span class="k">if</span> <span class="nx">atomic</span><span class="p">.</span><span class="nf">LoadUint32</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">o</span><span class="p">.</span><span class="nx">done</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="p">{</span>
+		<span class="c1">// Outlined slow-path to allow inlining of the fast-path.
+</span><span class="c1"></span>		<span class="nx">o</span><span class="p">.</span><span class="nf">doSlow</span><span class="p">(</span><span class="nx">f</span><span class="p">)</span>
+    <span class="p">}</span>
 <span class="p">}</span>
 </code></pre></td></tr></table>
 </div>
-</div><p>当一个或者多个reader持有锁的时候，竞争锁的writer会等待这些reader释放完，才可能持有这把锁。就是无法改变已经获得锁的reader的现实的，也不会强制这些reader释放锁，仅仅是限定后来的reader不要和他抢。</p>
-<p>所以最后rUnlockSlow将持有锁的reader计数减少1的时候会检查既有的reader是不是都已经释放了锁，如果都释放了锁，就会唤醒writer，让writer持有锁。</p>
-<h3 id="lock">Lock</h3>
+</div><p>把note中的那段代码截下来</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
-</span><span class="lnt"> 2
-</span><span class="lnt"> 3
-</span><span class="lnt"> 4
-</span><span class="lnt"> 5
-</span><span class="lnt"> 6
-</span><span class="lnt"> 7
-</span><span class="lnt"> 8
-</span><span class="lnt"> 9
-</span><span class="lnt">10
-</span><span class="lnt">11
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="p">(</span><span class="nx">rw</span> <span class="o">*</span><span class="nx">RWMutex</span><span class="p">)</span> <span class="nf">Lock</span><span class="p">()</span> <span class="p">{</span>
-	<span class="c1">// First, resolve competition with other writers.
-</span><span class="c1"></span>	<span class="nx">rw</span><span class="p">.</span><span class="nx">w</span><span class="p">.</span><span class="nf">Lock</span><span class="p">()</span>
-	<span class="c1">// Announce to readers there is a pending writer.
-</span><span class="c1"></span>	<span class="nx">r</span> <span class="o">:=</span> <span class="nx">atomic</span><span class="p">.</span><span class="nf">AddInt32</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">rw</span><span class="p">.</span><span class="nx">readerCount</span><span class="p">,</span> <span class="o">-</span><span class="nx">rwmutexMaxReaders</span><span class="p">)</span> <span class="o">+</span> <span class="nx">rwmutexMaxReaders</span>
-	<span class="c1">// Wait for active readers.
-</span><span class="c1"></span>	<span class="k">if</span> <span class="nx">r</span> <span class="o">!=</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="nx">atomic</span><span class="p">.</span><span class="nf">AddInt32</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">rw</span><span class="p">.</span><span class="nx">readerWait</span><span class="p">,</span> <span class="nx">r</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span> <span class="p">{</span>
-		<span class="nf">runtime_SemacquireMutex</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">rw</span><span class="p">.</span><span class="nx">writerSem</span><span class="p">,</span> <span class="kc">false</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
-	<span class="p">}</span>
-
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="k">if</span> <span class="nx">atomic</span><span class="p">.</span><span class="nf">CompareAndSwapUint32</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">o</span><span class="p">.</span><span class="nx">done</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nf">f</span><span class="p">()</span>
 <span class="p">}</span>
 </code></pre></td></tr></table>
 </div>
-</div><p>首先获得Mutex的锁，获取到互斥锁之后：</p>
-<ul>
-<li>将readerCount(&gt;=0)字段翻转，r := atomic.AddInt32(&amp;rw.readerCount, -rwmutexMaxReaders)，意思就是现在有writer了。</li>
-<li>通过计算过后如果还有reader持有锁，那么就调用<code>runtime_SemacquireMutex</code>阻塞休眠当前的writer等待所有的读操作完成</li>
-</ul>
-<h3 id="unlock">Unlock</h3>
+</div><p>大家都有一个问题，为什么Once不直接使用CAS获取锁？如果并发调用的话，一个goroutine执行，另外一个goroutine不会等正在这个执行的goroutine成功之后返回，而是直接就返回了，这就不能保证传进来的方法只执行一次了。</p>
+<p>所以官方的实现是这样的：</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
-</span><span class="lnt"> 2
-</span><span class="lnt"> 3
-</span><span class="lnt"> 4
-</span><span class="lnt"> 5
-</span><span class="lnt"> 6
-</span><span class="lnt"> 7
-</span><span class="lnt"> 8
-</span><span class="lnt"> 9
-</span><span class="lnt">10
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="p">(</span><span class="nx">rw</span> <span class="o">*</span><span class="nx">RWMutex</span><span class="p">)</span> <span class="nf">Unlock</span><span class="p">()</span> <span class="p">{</span>
-	<span class="c1">// Announce to readers there is no active writer.
-</span><span class="c1"></span>	<span class="nx">r</span> <span class="o">:=</span> <span class="nx">atomic</span><span class="p">.</span><span class="nf">AddInt32</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">rw</span><span class="p">.</span><span class="nx">readerCount</span><span class="p">,</span> <span class="nx">rwmutexMaxReaders</span><span class="p">)</span>
-	<span class="c1">// Unblock blocked readers, if any.
-</span><span class="c1"></span>	<span class="k">for</span> <span class="nx">i</span> <span class="o">:=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="p">&lt;</span> <span class="nb">int</span><span class="p">(</span><span class="nx">r</span><span class="p">);</span> <span class="nx">i</span><span class="o">++</span> <span class="p">{</span>
-		<span class="nf">runtime_Semrelease</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">rw</span><span class="p">.</span><span class="nx">readerSem</span><span class="p">,</span> <span class="kc">false</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
-	<span class="p">}</span>
-	<span class="c1">// Allow other writers to proceed.
-</span><span class="c1"></span>	<span class="nx">rw</span><span class="p">.</span><span class="nx">w</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">()</span>
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="k">if</span> <span class="nx">atomic</span><span class="p">.</span><span class="nf">LoadUint32</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">o</span><span class="p">.</span><span class="nx">done</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="p">{</span>
+    <span class="c1">// Outlined slow-path to allow inlining of the fast-path.
+</span><span class="c1"></span>    <span class="nx">o</span><span class="p">.</span><span class="nf">doSlow</span><span class="p">(</span><span class="nx">f</span><span class="p">)</span>
 <span class="p">}</span>
 </code></pre></td></tr></table>
 </div>
-</div><p>解锁的时候再将readerCount反转。之前Lock的时候将readerCount已经变为负数了。这时反转就直接加上rwmutexMaxReaders这个常数即可。</p>
-<p>然后将之前阻塞的reader唤醒，最后再将互斥锁释放即可。</p>
+</div><p>会先判断done是否为0，如果不为0说明还没执行过，就进入<code>doSlow</code></p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span><span class="lnt">9
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="p">(</span><span class="nx">o</span> <span class="o">*</span><span class="nx">Once</span><span class="p">)</span> <span class="nf">doSlow</span><span class="p">(</span><span class="nx">f</span> <span class="kd">func</span><span class="p">()){</span>
+    <span class="nx">o</span><span class="p">.</span><span class="nx">m</span><span class="p">.</span><span class="nf">Lock</span><span class="p">()</span>
+    <span class="k">defer</span> <span class="nx">o</span><span class="p">.</span><span class="nx">m</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="nx">o</span><span class="p">.</span><span class="nx">done</span> <span class="o">==</span> <span class="mi">0</span><span class="p">{</span>
+        <span class="k">defer</span> <span class="nx">atomic</span><span class="p">.</span><span class="nf">StoreUint32</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">o</span><span class="p">.</span><span class="nx">done</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+        <span class="nf">f</span><span class="p">()</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>在<code>doSlow</code>中使用了互斥锁来保证只会执行一次</p>
 <h2 id="总结">总结</h2>
+<ul>
+<li>Once 保证了传入的函数只会执行一次，这常用在单例模式，配置文件加载，初始化这些场景下</li>
+<li>但是需要注意。Once 是不能复用的，只要执行过了，再传入其他的方法也不会再执行了</li>
+<li>并且 Once.Do 在执行的过程中如果 f 出现 panic，后面也不会再执行了</li>
+</ul>
 <p><img
         class="lazyload"
         src="/svg/loading.min.svg"
-        data-src="https://cdn.jsdelivr.net/gh/lnback/imgbed/img/695b9aa6027b5d3a61e92cbcbba10042.jpg"
-        data-srcset="https://cdn.jsdelivr.net/gh/lnback/imgbed/img/695b9aa6027b5d3a61e92cbcbba10042.jpg, https://cdn.jsdelivr.net/gh/lnback/imgbed/img/695b9aa6027b5d3a61e92cbcbba10042.jpg 1.5x, https://cdn.jsdelivr.net/gh/lnback/imgbed/img/695b9aa6027b5d3a61e92cbcbba10042.jpg 2x"
+        data-src="https://cdn.jsdelivr.net/gh/lnback/imgbed/img/20210108181639.jpg"
+        data-srcset="https://cdn.jsdelivr.net/gh/lnback/imgbed/img/20210108181639.jpg, https://cdn.jsdelivr.net/gh/lnback/imgbed/img/20210108181639.jpg 1.5x, https://cdn.jsdelivr.net/gh/lnback/imgbed/img/20210108181639.jpg 2x"
         data-sizes="auto"
-        alt="https://cdn.jsdelivr.net/gh/lnback/imgbed/img/695b9aa6027b5d3a61e92cbcbba10042.jpg"
-        title="https://cdn.jsdelivr.net/gh/lnback/imgbed/img/695b9aa6027b5d3a61e92cbcbba10042.jpg" /></p>
+        alt="https://cdn.jsdelivr.net/gh/lnback/imgbed/img/20210108181639.jpg"
+        title="https://cdn.jsdelivr.net/gh/lnback/imgbed/img/20210108181639.jpg" /></p>
 </div><div class="post-footer" id="post-footer">
     <div class="post-info">
         <div class="post-info-line">
             <div class="post-info-mod">
-                <span>更新于 2021-01-07</span>
+                <span>更新于 2021-01-08</span>
             </div>
             <div class="post-info-license"></div>
         </div>
         <div class="post-info-line">
             <div class="post-info-md"><span>
-                            <a class="link-to-markdown" href="/2.rwmutex/index.md" target="_blank">阅读原始文档</a>
+                            <a class="link-to-markdown" href="/4.once/index.md" target="_blank">阅读原始文档</a>
                         </span></div>
             <div class="post-info-share">
                 <span></span>
@@ -319,8 +317,7 @@
         </section>
     </div>
 
-    <div class="post-nav"><a href="/1.mutex/" class="prev" rel="prev" title="Go并发编程(一)Mutex"><i class="fas fa-angle-left fa-fw"></i>Go并发编程(一)Mutex</a>
-            <a href="/3.waitgroup/" class="next" rel="next" title="Go并发编程(三)WaitGroup">Go并发编程(三)WaitGroup<i class="fas fa-angle-right fa-fw"></i></a></div>
+    <div class="post-nav"><a href="/3.waitgroup/" class="prev" rel="prev" title="Go并发编程(三)WaitGroup"><i class="fas fa-angle-left fa-fw"></i>Go并发编程(三)WaitGroup</a></div>
 </div>
 <div id="comments"><div id="valine" class="comment"></div><noscript>
                 Please enable JavaScript to view the comments powered by <a href="https://valine.js.org/">Valine</a>.

@@ -100,6 +100,26 @@
         "lightgallery": true
     },
     {
+        "title": "Go并发编程(二)RWMutex",
+        "uri": "posts/2.RWMutex",
+        "content": "RWMutex   Mutex        goroutine                                                                                                 RWMutex            readers writers                                                        RWMutex            Go  RWMutex Go     RWMutex     Write preferring          Lock       reader      RWMutex         5  Lock Unlock            RLock RUnlock            RLocker             Locker   Lock     RLock Unlock   RUnlock          RWMutex    Mutex         writerSem readerSem readerCount readerWait   go type RWMutex struct   w Mutex           writers    writerSem uint32    writer    readerSem uint32    reader    readerCount int32    reader    readerWait int32    writer     reader              reader                     32    readerCount                writer         rwmutexMaxReaders   1  0      r    atomic AddInt32  rw readerCount   rwmutexMaxReaders         writer             reader         runtime_SemacquireMutex       writer           Unlock  go func  rw  RWMutex  Unlock        Announce readers no active writer  r    atomic AddInt32  rw readerCount  rwmutexMaxReaders     Unblock blocked readers  any     0    int r   i     runtime_Semrelease  rw readerSem  false  0       Allow writers proceed  rw w Unlock              readerCount     Lock    readerCount                 rwmutexMaxReaders                reader",
+        "objectID": "posts/2.RWMutex",
+        "date": "2021-01-07T07:56:30.000Z",
+        "lastmod": null,
+        "draft": false,
+        "featuredImg": "",
+        "tags": [
+            "Go",
+            "并发"
+        ],
+        "categories": [
+            "Golang"
+        ],
+        "author": "lnback",
+        "description": "",
+        "lightgallery": true
+    },
+    {
         "title": "《用Go实现设计模式》三、建造者模式",
         "uri": "posts/3.建造者模式",
         "content": "4                                  go package builder import  fmt  type ResourcePoolConfig struct   name string maxTotal int maxIdle int minIdle int   type ResourcePoolConfigOption struct   maxTotal int maxIdle int minIdle int   type ResourcePoolConfigOptFunc func option  ResourcePoolConfigOption  func NewResourcePoolConfig name string opts    ResourcePoolConfigOptFunc    ResourcePoolConfig error   name        return nil fmt Errorf  name not empty     option     ResourcePoolConfigOption  maxTotal  10  maxIdle  9  minIdle  1    fmt Println option  _ opt    range opts  opt option    fmt Println option  option maxTotal option maxIdle  return nil fmt Errorf  args err option    v  option    return  ResourcePoolConfig  name  name  maxTotal  option maxTotal  minIdle  option minIdle  maxIdle  option maxIdle    nil            go package builder import    github com stretchr testify assert   github com stretchr testify require   testing    func TestNewResourcePoolConfig t  testing T    type args struct   name string opts   ResourcePoolConfigOptFunc   tests      struct  name string args args want  ResourcePoolConfig wantErr bool      name   name empty   args  args  name         want  nil  wantErr  true       name   success   args  args  name   test   opts    ResourcePoolConfigOptFunc  func option  ResourcePoolConfigOption    option minIdle   2          want   ResourcePoolConfig  name   test   maxTotal  10  maxIdle  9  minIdle  2     wantErr  false       _ tt    range tests  t Run tt name  func t  testing T    got err    NewResourcePoolConfig tt args name tt args opts     require Equalf t tt wantErr err    nil  error  v wantErr  v  err tt wantErr  assert Equal t tt want got",
