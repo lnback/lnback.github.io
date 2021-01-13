@@ -160,6 +160,26 @@
         "lightgallery": true
     },
     {
+        "title": "Go并发编程(三)WaitGroup",
+        "uri": "posts/3.WaitGroup",
+        "content": "WaitGroup   WaitGroup      goroutine    goroutine                                                    waitGroup         Add     WaitGroup     Done    WaitGroup     1        Add  1  Wait        goroutine        WaitGroup      0          go type WaitGroup struct                     vet           noCopy noCopy    64 bit value  high 32 bits counter  low 32 bits waiter count     64 bit atomic operations require 64 bit alignment  32 bit    compilers not ensure it  So allocate 12 bytes use    aligned 8 bytes state  4 storage    sema  state1  3 uint32     WaitGroup          noCopy state1 noCopy            vet state1   12                WaitGroup           waiter       go    state returns pointers state sema fields stored within wg state1  func  wg WaitGroup  state    statep uint64  semap  uint32           64bit             state           uintptr unsafe Pointer  wg state1   8    0   return   uint64  unsafe Pointer  wg state1     wg state1 2    else          32bit             state       64bit           32bit       return   uint64  unsafe Pointer  wg state1 1      wg state1 0                            state      32bit       32bit          counter waiterCounter    64bit     32bit              64bit              Add   Done  go func  wg  WaitGroup  Add delta int          state              statep  semap    wg state        waiter     delta   state    atomic AddUint64 statep  uint64 delta   32           waiter      goroutine    w    uint32 state     counter       v 0    v    int32 delta         Wait                              w    0    delta   0    v    int32 delta    panic  sync  WaitGroup misuse  Add called concurrently Wait                           counter   0 v   0    w    0   return                      add   wait  statep    state   panic  sync  WaitGroup misuse  Add called concurrently Wait             waiter  statep   0   w    0  w     runtime_Semrelease semap  false  0         Done decrements WaitGroup counter one  func  wg  WaitGroup  Done     wg Add  1      Wait Wait             state              0                                   0                               waiter            go func  wg  WaitGroup  Wait     statep  semap    wg state     state    atomic LoadUint64 statep  v    int32 state    32           w    uint32 state     waiter    v    0            0         goroutine                   return         waiter   1          Wait              for   atomic CompareAndSwapUint64 statep  state  state 1              runtime_Semacquire semap                 return            WaitGroup     goroutine    goroutine          goroutine    goroutine     Add n 0        goroutine        goroutine    Done   WaitGroup   Wait             Done  Add",
+        "objectID": "posts/3.WaitGroup",
+        "date": "2021-01-08T09:23:30.000Z",
+        "lastmod": null,
+        "draft": false,
+        "featuredImg": "",
+        "tags": [
+            "Go",
+            "并发"
+        ],
+        "categories": [
+            "Golang"
+        ],
+        "author": "lnback",
+        "description": "",
+        "lightgallery": true
+    },
+    {
         "title": "《Redis设计与实现》（四）持久化",
         "uri": "posts/4.持久化",
         "content": "RDB                                                                 Redis                                                        Redis   RDB             Redis                   RDB      RDB   Redis Database                                                           1 1 RDB            Redis        RDB      SAVE     BGSAVE  BackGround SAVE  SAVE     Redis        RDB                                    bash redis  SAVE       RDB       OK    BGSAVE               RDB     bash redis  BGSAVE                RDB   Background saving started   BGSAVE       SAVE   BGSAVE BGREWRITEAOF                RDB        rdb c rdbSave     SAVE   BGSAVE                 Redis     RDB                 RDB                          1 2          BGSAVE                                            bash save 900 1 save 300 10 save 60 10000            900           1    300         10                save                  redisServer   saveparams     c struct redisServer                        struct saveparam  saveparams               saveparams                    saveparam     saveparam         save            c struct saveparam         time_t seconds         int changes                saveparams               dirty        lastsave    dirty         SAVE BGSAVE                            lastsave                                      dirty                          N  bash redis  SADD database0 apple orange watermelon   Redis           serverCron    100                                        save                           BGSAVE          dirty 0 lastsave    1 3 RDB        RDB      RDB                                                             ASCII   UNICODE                                    REDIS 5     5          RDB    db_version   4        RDB      0006     6   database                                EOF 1           check_sum  8                                                    1 3 1 database           RDB         SELECTDB dbnumber keyvalue_pairs            SELECTDB  1                               db_number  1 2 5             keyvaluepairs                1 3 2 keyvaluepairs              RDB    TYPE key value                  RDB        EPIRETIME_MS  1                            ms  8                   UNIX     1 3 3 value    1         TYPE    REDISRDBTYPESTRING   value                        REDISENCODINGINT  REDISENCODING_RAW      INT              32                ENCODING     REDISRDBENCINT8 REDISRDBENCINT16  REDISRDBENC_INT32                RDB    8  16   32       integer     RAW                                                                  REDISRDBENC_LZF     LZF     compressed_len            origin_len       compressed_string           2        TYPE    REDISRDBTYPELIST   value       REDISENCODING_LINKEDLIST         RDB                                                        3       5           5     hello    3        TYPE    REDISRDBTYPESET   value       REDISENCODING_HT         RDB                   elem                               4       5          apple    4         TYPE   REDISRDBTYPEHASH   value       REDISENCODING_HT        RDB                             2            1     a    5     apple    5          TYPE   REDISRDBTYPEZSET   value       REDISENCODING_SKIPLIST          RDB                        2          2     pi           4     3 14    6 INTSET        TYPE   REDISRDBTYPESETINTSET   value              RDB                                         RDB       7 ZIPLIST                 TYPE   REDISRDBTYPELISTZIPLIST REDISRDBTYPEHASHZIPLIST  REDISRDBTYPEZSETZIPLIST   value                                      AOF    RDB              AOF Append File    Redis                       bash redis  SET msg  hello  OK    AOF         bash  2 r n 6 r nSELECT r n 1 r n0 r n  3 r n 3 r nSET r n 3 r nmsg r n 5 r nhello r n   2 1 AOF     AOF      Append File AOF                 appen          sync  2 1 1        AOF                                  aof_buf         c struct redisServer          sds aof_buf     AOF                      SET KEY VALUE              aof_buf      bash  3 r n 3 r nSET r n 3 r nKEY r n 5 r nVALUE r n   2 1 2 AOF         Redis               loop                                                 serverCron                                    flushAppendOnlyFile          aof_buf             AOF                     appendfsync          everysec                          aof_buf    AOF     2 2 AOF             AOF                                        AOF                               AOF                                redis                 AOF                         23  2 3 AOF           AOF                     Redis   AOF          Redis           AOF        AOF       AOF                                                                                  aof_rewrite         list   RPUSH     A   B   C     LPOP        4      RPUSH list B              aof_rewrite                              Redis AOF                    AOF                          Redis        AOF                            Redis                           AOF    AOF                 AOF                              AOF              AOF            AOF                      AOF    ",
@@ -191,6 +211,26 @@
         "tags": [
             "Go",
             "设计模式"
+        ],
+        "categories": [
+            "Golang"
+        ],
+        "author": "lnback",
+        "description": "",
+        "lightgallery": true
+    },
+    {
+        "title": "Go并发编程(四)Once",
+        "uri": "posts/4.Once",
+        "content": "Once   Once                                                          Once   Java                     go    once      go type Singleton struct   var   singleton  Singleton once sync Once   func GetInstance    Singleton  singleton    nil  once Do func    singleton    Singleton        return singleton         go func  o  Once  Do f func               note             CAS   Once         Note  incorrect implementation Do        atomic CompareAndSwapUint32  o done  0  1       f              guarantees when returns  f finished     implementation not implement guarantee     given two simultaneous calls  winner cas    call f  second return immediately  without    waiting first s call f complete     why slow path falls back mutex  why    atomic StoreUint32 delayed until f returns  atomic LoadUint32  o done     0      Outlined slow path allow inlining fast path  o doSlow f         note           go atomic CompareAndSwapUint32  o done  0  1    f                   Once     CAS               goroutine       goroutine          goroutine                                                  go atomic LoadUint32  o done     0      Outlined slow path allow inlining fast path  o doSlow f          done   0     0           doSlow  go func  o  Once  doSlow f func     o m Lock   defer o m Unlock   o done    0  defer atomic StoreUint32  o done 1  f          doSlow                    Once                                                Once                                  Once Do           f    panic",
+        "objectID": "posts/4.Once",
+        "date": "2021-01-08T10:19:30.000Z",
+        "lastmod": null,
+        "draft": false,
+        "featuredImg": "",
+        "tags": [
+            "Go",
+            "并发"
         ],
         "categories": [
             "Golang"

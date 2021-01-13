@@ -3,7 +3,14 @@
         <title>Go - 标签 - lnback&#39; s blog</title>
         <link>https://example.com/tags/go/</link>
         <description>Go - 标签 - lnback&#39; s blog</description>
-        <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright><lastBuildDate>Fri, 08 Jan 2021 18:19:30 &#43;0800</lastBuildDate><atom:link href="https://example.com/tags/go/" rel="self" type="application/rss+xml" /><item>
+        <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright><lastBuildDate>Wed, 13 Jan 2021 16:12:00 &#43;0800</lastBuildDate><atom:link href="https://example.com/tags/go/" rel="self" type="application/rss+xml" /><item>
+    <title>Go并发编程(五)atomic</title>
+    <link>https://example.com/5.atomic/</link>
+    <pubDate>Wed, 13 Jan 2021 16:12:00 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://example.com/5.atomic/</guid>
+    <description><![CDATA[atomic sync/atomic实现了同步算法底层的原子的内存操作原语。Go提供了一个通用的原子操作API，将更底层的不同的架构下的实现封装成ato]]></description>
+</item><item>
     <title>Go并发编程(四)Once</title>
     <link>https://example.com/4.once/</link>
     <pubDate>Fri, 08 Jan 2021 18:19:30 &#43;0800</pubDate>
@@ -66,12 +73,5 @@
     <author>作者</author>
     <guid>https://example.com/1.%E5%8D%95%E4%BE%8B%E6%A8%A1%E5%BC%8F/</guid>
     <description><![CDATA[单例模式 定义 一个类只允许创建一个对象（或者叫实例），那这个类就是一个单例类，这种设计模式就叫作单例设计模式，简称单例模式。 用处 从业务概念上，]]></description>
-</item><item>
-    <title>Go语言的CSP模型</title>
-    <link>https://example.com/go%E8%AF%AD%E8%A8%80%E7%9A%84csp%E6%A8%A1%E5%9E%8B/</link>
-    <pubDate>Fri, 18 Dec 2020 18:16:30 &#43;0800</pubDate>
-    <author>作者</author>
-    <guid>https://example.com/go%E8%AF%AD%E8%A8%80%E7%9A%84csp%E6%A8%A1%E5%9E%8B/</guid>
-    <description><![CDATA[go语言的两个亮点：一个是goroutine，一个就是channel。二者合体的典型应用CSP，就是大家认可的并行开发神器。 1.1 什么是CSP？]]></description>
 </item></channel>
 </rss>

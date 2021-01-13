@@ -3,7 +3,14 @@
         <title>并发 - 标签 - lnback&#39; s blog</title>
         <link>https://example.com/tags/%E5%B9%B6%E5%8F%91/</link>
         <description>并发 - 标签 - lnback&#39; s blog</description>
-        <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright><lastBuildDate>Fri, 08 Jan 2021 18:19:30 &#43;0800</lastBuildDate><atom:link href="https://example.com/tags/%E5%B9%B6%E5%8F%91/" rel="self" type="application/rss+xml" /><item>
+        <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright><lastBuildDate>Wed, 13 Jan 2021 16:12:00 &#43;0800</lastBuildDate><atom:link href="https://example.com/tags/%E5%B9%B6%E5%8F%91/" rel="self" type="application/rss+xml" /><item>
+    <title>Go并发编程(五)atomic</title>
+    <link>https://example.com/5.atomic/</link>
+    <pubDate>Wed, 13 Jan 2021 16:12:00 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://example.com/5.atomic/</guid>
+    <description><![CDATA[atomic sync/atomic实现了同步算法底层的原子的内存操作原语。Go提供了一个通用的原子操作API，将更底层的不同的架构下的实现封装成ato]]></description>
+</item><item>
     <title>Go并发编程(四)Once</title>
     <link>https://example.com/4.once/</link>
     <pubDate>Fri, 08 Jan 2021 18:19:30 &#43;0800</pubDate>
